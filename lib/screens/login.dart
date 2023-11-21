@@ -203,10 +203,11 @@ class _LoginState extends State<Login> {
                 SizedBox(
                   height: MediaQuery.of(context).size.height / 5,
                 ),
-                Image.asset(
-                  'assets/images/hascol_logo.png',
-                  width: 200,
-                ),
+                Text("Sales Bridge Logo", style: TextStyle(fontSize: 20),)
+                // Image.asset(
+                //   'assets/images/hascol_logo.png',
+                //   width: 200,
+                // ),
               ],
             ),
           ),

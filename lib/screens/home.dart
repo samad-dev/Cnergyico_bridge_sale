@@ -39,165 +39,173 @@ class _HomeScreenState extends State<Home> {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('EEE d MMM kk:mm:ss').format(now);
     return Scaffold(
-      backgroundColor: Color(0xffffffff),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 48.0, left: 5, right: 5),
-          child: Column(
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    backgroundColor: Color(0xff12283D),
-                    radius: 30,
-                    child: Text(
-                      'Hascol',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontStyle: FontStyle.normal,
-                      ),
-                    ), //Text
-                  ),
-                  SizedBox(
-                    width: 5,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Welcome Home,',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Color(0xff8A8A8A),
-                            fontWeight: FontWeight.w500,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                        Text(
-                          'Hascol Sales',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Color(0xff000000),
-                            fontWeight: FontWeight.w800,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
+      body: Padding(
+        padding: const EdgeInsets.only(top: 48.0, left: 5, right: 5),
+        child: Column(
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  backgroundColor: Color(0xff12283D),
+                  radius: 30,
+                  child: Text(
+                    'SB',
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontStyle: FontStyle.normal,
                     ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width / 3.2,
-                  ),
-                  IconButton(
-                      // Use the FaIcon Widget + FontAwesomeIcons class for the IconData
-                      icon: Icon(
-                        Icons.add_box_rounded,
-                        color: Color(0xff12283D),
-                        size: 35,
+                  ), //Text
+                ),
+                SizedBox(
+                  width: 5,
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome Home,',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Color(0xff8A8A8A),
+                          fontWeight: FontWeight.w500,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => Create_Order()),
-                        );
-                        print("Pressed");
-                      }),
-                ],
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "You've got",
-                          style: GoogleFonts.poppins(
-                            textStyle: Theme.of(context).textTheme.displayLarge,
-                            fontSize: 18,
-                            color: Color(0xd8787676),
-                            fontWeight: FontWeight.w700,
-                            fontStyle: FontStyle.normal,
-                          ),
+                      Text(
+                        'Sales Bridge',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Color(0xff000000),
+                          fontWeight: FontWeight.w800,
+                          fontStyle: FontStyle.italic,
                         ),
-                        Text(
-                          '4 task today',
-                          style: GoogleFonts.poppins(
-                            textStyle: Theme.of(context).textTheme.displayLarge,
-                            fontSize: 18,
-                            color: Color(0xff12283D),
-                            fontWeight: FontWeight.w700,
-                            fontStyle: FontStyle.normal,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10))),
-                    color: Color(0xff12283D),
-                    elevation: 15,
-                    child: SizedBox(
-                      width: 165,
-                      height: 160,
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(
-                              height: 5,
+                ),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width / 2.5,
+                ),
+                IconButton(
+                    // Use the FaIcon Widget + FontAwesomeIcons class for the IconData
+                    icon: Icon(
+                      Icons.add_box_rounded,
+                      color: Color(0xff12283D),
+                      size: 35,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => Create_Order()),
+                      );
+                      print("Pressed");
+                    }),
+              ],
+            ),
+            SizedBox(
+              height: 20,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "You've got",
+                        style: GoogleFonts.poppins(
+                          textStyle: Theme.of(context).textTheme.displayLarge,
+                          fontSize: 18,
+                          color: Color(0xd8787676),
+                          fontWeight: FontWeight.w700,
+                          fontStyle: FontStyle.normal,
+                        ),
+                      ),
+                      Text(
+                        '4 task today',
+                        style: GoogleFonts.poppins(
+                          textStyle: Theme.of(context).textTheme.displayLarge,
+                          fontSize: 18,
+                          color: Color(0xff12283D),
+                          fontWeight: FontWeight.w700,
+                          fontStyle: FontStyle.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Card(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10))),
+                  color: Color(0xff3a833c),//color: Color(0xff12283D),
+                  elevation: 15,
+                  child: SizedBox(
+                    width: 165,
+                    height: 160,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(
+                            height: 5,
+                          ),
+                          Card(
+                            color: Color(0xff586776),
+                            child: SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: Icon(
+                                Icons.bookmark_border,
+                                color: Colors.white,
+                              ),
                             ),
-                            Card(
-                              color: Color(0xff586776),
-                              child: SizedBox(
-                                width: 30,
-                                height: 30,
-                                child: Icon(
-                                  Icons.bookmark_border,
-                                  color: Colors.white,
+                          ), //Text
+                          const SizedBox(
+                            height: 5,
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Total Orders',
+                                style: GoogleFonts.poppins(
+                                  color: Color(0xffffffff),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  fontStyle: FontStyle.normal,
                                 ),
                               ),
-                            ), //Text
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Total Orders',
-                                  style: GoogleFonts.poppins(
-                                    color: Color(0xffffffff),
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
-                                    fontStyle: FontStyle.normal,
-                                  ),
+                              Text(
+                                '100 Orders',
+                                style: GoogleFonts.montserrat(
+                                  color: Color(0xffc7c7c7),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.normal,
                                 ),
-                                Text(
-                                  '100 Orders',
+                              ),
+                              OutlinedButton(
+                                child: Text(
+                                  'View Order',
                                   style: GoogleFonts.montserrat(
                                     color: Color(0xffc7c7c7),
                                     fontWeight: FontWeight.w600,
@@ -205,87 +213,87 @@ class _HomeScreenState extends State<Home> {
                                     fontStyle: FontStyle.normal,
                                   ),
                                 ),
-                                OutlinedButton(
-                                  child: Text(
-                                    'View Order',
-                                    style: GoogleFonts.montserrat(
-                                      color: Color(0xffc7c7c7),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
-                                      fontStyle: FontStyle.normal,
-                                    ),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(
+                                      width: 1.0, color: Color(0xd5e0e0e0)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide(
-                                        width: 1.0, color: Color(0xd5e0e0e0)),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => Create_Order()),
-                                    );
-                                  },
-                                )
-                              ],
-                            ),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => Create_Order()),
+                                  );
+                                },
+                              )
+                            ],
+                          ),
 
-                            //SizedBox
-                            //T //SizedBox
-                            //SizedBox
-                          ],
-                        ), //Column
-                      ), //Padding
-                    ), //SizedBox,
-                  ),
-                  Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10))),
-                    color: Color(0xff12283D),
-                    elevation: 15,
-                    child: SizedBox(
-                      width: 165,
-                      height: 160,
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(
-                              height: 5,
+                          //SizedBox
+                          //T //SizedBox
+                          //SizedBox
+                        ],
+                      ), //Column
+                    ), //Padding
+                  ), //SizedBox,
+                ),
+                Card(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10))),
+                  color: Color(0xff3a833c),//color: Color(0xff12283D),
+                  elevation: 15,
+                  child: SizedBox(
+                    width: 165,
+                    height: 160,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(
+                            height: 5,
+                          ),
+                          Card(
+                            color: Color(0xff586776),
+                            child: SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: Icon(
+                                FluentIcons.gas_pump_24_regular,
+                                color: Colors.white,
+                              ),
                             ),
-                            Card(
-                              color: Color(0xff586776),
-                              child: SizedBox(
-                                width: 30,
-                                height: 30,
-                                child: Icon(
-                                  FluentIcons.gas_pump_24_regular,
-                                  color: Colors.white,
+                          ), //Text
+                          const SizedBox(
+                            height: 5,
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Total Outlets',
+                                style: GoogleFonts.poppins(
+                                  color: Color(0xffffffff),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  fontStyle: FontStyle.normal,
                                 ),
                               ),
-                            ), //Text
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Total Outlets',
-                                  style: GoogleFonts.poppins(
-                                    color: Color(0xffffffff),
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
-                                    fontStyle: FontStyle.normal,
-                                  ),
+                              Text(
+                                '100 Outlets',
+                                style: GoogleFonts.montserrat(
+                                  color: Color(0xffc7c7c7),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.normal,
                                 ),
-                                Text(
-                                  '100 Outlets',
+                              ),
+                              OutlinedButton(
+                                child: Text(
+                                  'View Outlets',
                                   style: GoogleFonts.montserrat(
                                     color: Color(0xffc7c7c7),
                                     fontWeight: FontWeight.w600,
@@ -293,381 +301,383 @@ class _HomeScreenState extends State<Home> {
                                     fontStyle: FontStyle.normal,
                                   ),
                                 ),
-                                OutlinedButton(
-                                  child: Text(
-                                    'View Outlets',
-                                    style: GoogleFonts.montserrat(
-                                      color: Color(0xffc7c7c7),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(
+                                      width: 1.0, color: Color(0xd5e0e0e0)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => Create_Order()),
+                                  );
+                                },
+                              )
+                            ],
+                          ),
+
+                          //SizedBox
+                          //T //SizedBox
+                          //SizedBox
+                        ],
+                      ), //Column
+                    ), //Padding
+                  ), //SizedBox,
+                ),
+
+                //
+              ],
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            
+            Expanded(
+              child: SingleChildScrollView(
+                child: Card(
+                  color: Color(0xfff9f9f9),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Upcoming',
+                              style: GoogleFonts.poppins(
+                                textStyle: Theme.of(context).textTheme.displayLarge,
+                                fontSize: 18,
+                                color: Color(0xff12283D),
+                                fontWeight: FontWeight.w700,
+                                fontStyle: FontStyle.normal,
+                              ),
+                            ),
+                            Text(
+                              'View All',
+                              style: GoogleFonts.poppins(
+                                textStyle: Theme.of(context).textTheme.displaySmall,
+                                fontSize: 15,
+                                color: Color(0xff727272),
+                                fontWeight: FontWeight.w300,
+                                fontStyle: FontStyle.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Card(
+                        elevation: 10,
+                        color: Color(0xffffffff),
+                        child: Container(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  height: 20,
+                                ),
+                                Text(
+                                  'Inspection at Hascol - Jauhar',
+                                  style: GoogleFonts.poppins(
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 12,
                                       fontStyle: FontStyle.normal,
+                                      color: Color(0xff12283D),
+                                      fontSize: 14),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Stock Reconcilation',
+                                      style: GoogleFonts.montserrat(
+                                          fontWeight: FontWeight.w200,
+                                          fontStyle: FontStyle.normal,
+                                          color: Color(0xff737373),
+                                          fontSize: 12),
                                     ),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide(
-                                        width: 1.0, color: Color(0xd5e0e0e0)),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                                    Text(
+                                      'Details',
+                                      style: GoogleFonts.montserrat(
+                                          fontWeight: FontWeight.w200,
+                                          fontStyle: FontStyle.normal,
+                                          color: Color(0xff737373),
+                                          fontSize: 12),
                                     ),
-                                  ),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => Create_Order()),
-                                    );
-                                  },
-                                )
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Divider(height: 1, color: Color(0xffBFBFBF)),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Wrap(
+                                      children: [
+                                        Icon(
+                                          FluentIcons.clock_48_regular,
+                                          size: 15,
+                                          color: Color(0xff12283d),
+                                        ),
+                                        SizedBox(
+                                          width: 5,
+                                        ),
+                                        Text(
+                                          '2023-09-25 05:30 PM',
+                                          style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.w200,
+                                              fontStyle: FontStyle.normal,
+                                              color: Color(0xff737373),
+                                              fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                    ElevatedButton(
+                                      child: Text(
+                                        'Start',
+                                        style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.w500,
+                                          fontStyle: FontStyle.normal,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        primary: Color(0xff12283D),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(30.0),
+                                        ),
+
+                                      ),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => Inspection()),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
-
-                            //SizedBox
-                            //T //SizedBox
-                            //SizedBox
-                          ],
-                        ), //Column
-                      ), //Padding
-                    ), //SizedBox,
-                  ),
-
-                  //
-                ],
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Upcoming',
-                      style: GoogleFonts.poppins(
-                        textStyle: Theme.of(context).textTheme.displayLarge,
-                        fontSize: 18,
-                        color: Color(0xff12283D),
-                        fontWeight: FontWeight.w700,
-                        fontStyle: FontStyle.normal,
+                          ),
+                        ),
                       ),
-                    ),
-                    Text(
-                      'View All',
-                      style: GoogleFonts.poppins(
-                        textStyle: Theme.of(context).textTheme.displaySmall,
-                        fontSize: 15,
-                        color: Color(0xff727272),
-                        fontWeight: FontWeight.w300,
-                        fontStyle: FontStyle.normal,
+                      Card(
+                        elevation: 10,
+                        color: Color(0xffffffff),
+                        child: Container(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  height: 20,
+                                ),
+                                Text(
+                                  'Inspection at Hascol - Jauhar',
+                                  style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                      fontStyle: FontStyle.normal,
+                                      color: Color(0xff12283D),
+                                      fontSize: 14),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Stock Reconcilation',
+                                      style: GoogleFonts.montserrat(
+                                          fontWeight: FontWeight.w200,
+                                          fontStyle: FontStyle.normal,
+                                          color: Color(0xff737373),
+                                          fontSize: 12),
+                                    ),
+                                    Text(
+                                      'Details',
+                                      style: GoogleFonts.montserrat(
+                                          fontWeight: FontWeight.w200,
+                                          fontStyle: FontStyle.normal,
+                                          color: Color(0xff737373),
+                                          fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Divider(height: 1, color: Color(0xffBFBFBF)),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Wrap(
+                                      children: [
+                                        Icon(
+                                          FluentIcons.clock_48_regular,
+                                          size: 15,
+                                          color: Color(0xff12283d),
+                                        ),
+                                        SizedBox(
+                                          width: 5,
+                                        ),
+                                        Text(
+                                          '2023-09-25 05:30 PM',
+                                          style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.w200,
+                                              fontStyle: FontStyle.normal,
+                                              color: Color(0xff737373),
+                                              fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                    ElevatedButton(
+                                      child: Text(
+                                        'Start',
+                                        style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.w500,
+                                          fontStyle: FontStyle.normal,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        primary: Color(0xff12283D),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(30.0),
+                                        ),
+
+                                      ),
+                                      onPressed: () {
+
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Card(
-                elevation: 10,
-                color: Color(0xffffffff),
-                child: Container(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          height: 20,
-                        ),
-                        Text(
-                          'Inspection at Hascol - Jauhar',
-                          style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontStyle: FontStyle.normal,
-                              color: Color(0xff12283D),
-                              fontSize: 14),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Stock Reconcilation',
-                              style: GoogleFonts.montserrat(
-                                  fontWeight: FontWeight.w200,
-                                  fontStyle: FontStyle.normal,
-                                  color: Color(0xff737373),
-                                  fontSize: 12),
-                            ),
-                            Text(
-                              'Details',
-                              style: GoogleFonts.montserrat(
-                                  fontWeight: FontWeight.w200,
-                                  fontStyle: FontStyle.normal,
-                                  color: Color(0xff737373),
-                                  fontSize: 12),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Divider(height: 1, color: Color(0xffBFBFBF)),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Wrap(
+                      Card(
+                        elevation: 10,
+                        color: Color(0xffffffff),
+                        child: Container(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(
-                                  FluentIcons.clock_48_regular,
-                                  size: 15,
-                                  color: Color(0xff12283d),
-                                ),
                                 SizedBox(
-                                  width: 5,
+                                  height: 20,
                                 ),
                                 Text(
-                                  '2023-09-25 05:30 PM',
-                                  style: GoogleFonts.montserrat(
-                                      fontWeight: FontWeight.w200,
+                                  'Inspection at Hascol - Jauhar',
+                                  style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
                                       fontStyle: FontStyle.normal,
-                                      color: Color(0xff737373),
-                                      fontSize: 12),
+                                      color: Color(0xff12283D),
+                                      fontSize: 14),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Stock Reconcilation',
+                                      style: GoogleFonts.montserrat(
+                                          fontWeight: FontWeight.w200,
+                                          fontStyle: FontStyle.normal,
+                                          color: Color(0xff737373),
+                                          fontSize: 12),
+                                    ),
+                                    Text(
+                                      'Details',
+                                      style: GoogleFonts.montserrat(
+                                          fontWeight: FontWeight.w200,
+                                          fontStyle: FontStyle.normal,
+                                          color: Color(0xff737373),
+                                          fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Divider(height: 1, color: Color(0xffBFBFBF)),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Wrap(
+                                      children: [
+                                        Icon(
+                                          FluentIcons.clock_48_regular,
+                                          size: 15,
+                                          color: Color(0xff12283d),
+                                        ),
+                                        SizedBox(
+                                          width: 5,
+                                        ),
+                                        Text(
+                                          '2023-09-25 05:30 PM',
+                                          style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.w200,
+                                              fontStyle: FontStyle.normal,
+                                              color: Color(0xff737373),
+                                              fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                    ElevatedButton(
+                                      child: Text(
+                                        'Start',
+                                        style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.w500,
+                                          fontStyle: FontStyle.normal,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        primary: Color(0xff12283D),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(30.0),
+                                        ),
+
+                                      ),
+                                      onPressed: () {
+
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                            ElevatedButton(
-                              child: Text(
-                                'Start',
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w500,
-                                  fontStyle: FontStyle.normal,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                primary: Color(0xff12283D),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30.0),
-                            ),
-
-                              ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => Inspection()),
-                                );
-                              },
-                            ),
-                          ],
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              Card(
-                elevation: 10,
-                color: Color(0xffffffff),
-                child: Container(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          height: 20,
-                        ),
-                        Text(
-                          'Inspection at Hascol - Jauhar',
-                          style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontStyle: FontStyle.normal,
-                              color: Color(0xff12283D),
-                              fontSize: 14),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Stock Reconcilation',
-                              style: GoogleFonts.montserrat(
-                                  fontWeight: FontWeight.w200,
-                                  fontStyle: FontStyle.normal,
-                                  color: Color(0xff737373),
-                                  fontSize: 12),
-                            ),
-                            Text(
-                              'Details',
-                              style: GoogleFonts.montserrat(
-                                  fontWeight: FontWeight.w200,
-                                  fontStyle: FontStyle.normal,
-                                  color: Color(0xff737373),
-                                  fontSize: 12),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Divider(height: 1, color: Color(0xffBFBFBF)),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Wrap(
-                              children: [
-                                Icon(
-                                  FluentIcons.clock_48_regular,
-                                  size: 15,
-                                  color: Color(0xff12283d),
-                                ),
-                                SizedBox(
-                                  width: 5,
-                                ),
-                                Text(
-                                  '2023-09-25 05:30 PM',
-                                  style: GoogleFonts.montserrat(
-                                      fontWeight: FontWeight.w200,
-                                      fontStyle: FontStyle.normal,
-                                      color: Color(0xff737373),
-                                      fontSize: 12),
-                                ),
-                              ],
-                            ),
-                            ElevatedButton(
-                              child: Text(
-                                'Start',
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w500,
-                                  fontStyle: FontStyle.normal,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                primary: Color(0xff12283D),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30.0),
-                                ),
+            ),
 
-                              ),
-                              onPressed: () {
-
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Card(
-                elevation: 10,
-                color: Color(0xffffffff),
-                child: Container(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          height: 20,
-                        ),
-                        Text(
-                          'Inspection at Hascol - Jauhar',
-                          style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontStyle: FontStyle.normal,
-                              color: Color(0xff12283D),
-                              fontSize: 14),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Stock Reconcilation',
-                              style: GoogleFonts.montserrat(
-                                  fontWeight: FontWeight.w200,
-                                  fontStyle: FontStyle.normal,
-                                  color: Color(0xff737373),
-                                  fontSize: 12),
-                            ),
-                            Text(
-                              'Details',
-                              style: GoogleFonts.montserrat(
-                                  fontWeight: FontWeight.w200,
-                                  fontStyle: FontStyle.normal,
-                                  color: Color(0xff737373),
-                                  fontSize: 12),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Divider(height: 1, color: Color(0xffBFBFBF)),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Wrap(
-                              children: [
-                                Icon(
-                                  FluentIcons.clock_48_regular,
-                                  size: 15,
-                                  color: Color(0xff12283d),
-                                ),
-                                SizedBox(
-                                  width: 5,
-                                ),
-                                Text(
-                                  '2023-09-25 05:30 PM',
-                                  style: GoogleFonts.montserrat(
-                                      fontWeight: FontWeight.w200,
-                                      fontStyle: FontStyle.normal,
-                                      color: Color(0xff737373),
-                                      fontSize: 12),
-                                ),
-                              ],
-                            ),
-                            ElevatedButton(
-                              child: Text(
-                                'Start',
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w500,
-                                  fontStyle: FontStyle.normal,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                primary: Color(0xff12283D),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30.0),
-                                ),
-
-                              ),
-                              onPressed: () {
-
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
       ),
       bottomNavigationBar: Container(

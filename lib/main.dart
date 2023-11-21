@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Hascol',
+      title: 'Sales bridge',
       home: SplashScreen(),
     );
   }
@@ -66,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen> {
               children: [
                 Container(
                   child: Text(
-                    'Welcome To Hascol',
+                    'Welcome To Sales Bridge',
                     style: GoogleFonts.poppins(
                       textStyle: Theme.of(context).textTheme.displayLarge,
                       fontSize: 28,
@@ -93,10 +93,11 @@ class _SplashScreenState extends State<SplashScreen> {
             SizedBox(
               height: MediaQuery.of(context).size.height / 18,
             ),
-            Image.asset(
-              'assets/images/hascol_logo.png',
-              width: 200,
-            ),
+            Text("Sales Bridge Logo"),
+            // Image.asset(
+            //   'assets/images/hascol_logo.png',
+            //   width: 200,
+            // ),
             Container(
               alignment: Alignment.center,
               padding: EdgeInsets.only(left: 80, right: 80,top: 30),
