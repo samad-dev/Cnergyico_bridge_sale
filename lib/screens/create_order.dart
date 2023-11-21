@@ -1,16 +1,15 @@
 import 'dart:convert';
 
-import 'package:fl_chart/fl_chart.dart';
-import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hascol_inspection/screens/home.dart';
-import 'package:hascol_inspection/screens/login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:dropdown_plus/dropdown_plus.dart';
+
+import 'order_list.dart';
 
 class Create_Order extends StatefulWidget {
   static const Color contentColorOrange = Color(0xFF00705B);
@@ -21,28 +20,205 @@ class Create_Order extends StatefulWidget {
 }
 
 class _CreateOrderState extends State<Create_Order> {
-  int hsd = 350;
+  late Future<List<Map<String, dynamic>>?> data1;
+  List<dynamic>? sapi;
+  List<int> product_values1 = [];
+  List<TextEditingController> controllers = [];
+  late List<int> selectedOptions;
+  late List<double> hsdtValues;
+  int? total;
+  double hsd = 0;
   int hobc = 330;
   int pmg = 332;
   int hsdt = 0;
   int hobct = 0;
   int pmgt = 0;
   List data = [];
-  String? _mySelection;
+  String? _mySelection='0';
+  String? account;
   TextEditingController hsdController = new TextEditingController();
   TextEditingController pmgController = new TextEditingController();
   TextEditingController hobcController = new TextEditingController();
   TextEditingController depotController = new TextEditingController();
   TextEditingController tlController = new TextEditingController();
+  List<String> size_type_list = [];
+  List<String> size_id_list = [];
+  String? selectedsizeformId;
+  String? selectedsizeformType;
   var _site = "Self";
+  double sum = 0.0;
+  void updateSum() {
+    sum = 0;
+    List<double> numbers = hsdtValues;
+    sum = numbers.reduce((value, element) => value + element);
+
+    print("Sum: $sum");
+  }
+
+  create() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+   // var id = prefs.getString("Id");
+    var id = 46;
+    // var legder_balance = prefs.getString("account");
+    var legder_balance = 0;
+    List<Map<String, dynamic>> jsonArray = [];
+    for (int i = 0; i < hsdtValues.length; i++) {
+      print('Moiz:====${controllers[i].text.toString()}');
+      print('Moiz2:====${sapi?[i]['indent_price']}');
+      Map<String, dynamic> jsonObject = {
+        'p_id': '${sapi?[i]['id']}',
+        'quantity': selectedOptions[i].toString(),
+        'indent_price': '${sapi?[i]['indent_price']}',
+        'product_name': '${sapi?[i]['name']}',
+        'amount': hsdtValues[i],
+      };
+      jsonArray.add(jsonObject);
+    }
+    // Convert the array to a JSON string
+    String jsonString = json.encode(jsonArray);
+
+    // Print the JSON string
+    print(jsonString);
+    print("${id}||${_mySelection}||${_site}||${tlController.text.toString()}||${sum}||${legder_balance}");
+    var request = http.MultipartRequest('POST', Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/create/create_dealers_orders.php'));
+    if (_site == "Self") {
+      if (tlController.text.isNotEmpty) {
+        request.fields.addAll({
+          'dealer_id': '${id}',
+          'row_id': '',
+          'depot': '${_mySelection}',
+          'type': '${_site}',
+          'tl_no': '${tlController.text.toString()}',
+          'total': '${sum}',
+          'product': '${jsonString}',
+          'legder_balance': '${legder_balance}',
+        });
+        http.StreamedResponse response = await request.send();
+        if (response.statusCode == 200) {
+          var ret = await response.stream.bytesToString();
+          if (ret == '1') {
+            Fluttertoast.showToast(
+                msg: 'Order Created Successfully',
+                backgroundColor: Colors.greenAccent,
+                textColor: Colors.black);
+            Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (context) =>
+                        Orders()));
+          } else {
+            Fluttertoast.showToast(
+                msg: 'Order Not Created',
+                backgroundColor: Colors.redAccent,
+                textColor: Colors.white);
+          }
+          print(ret);
+        } else {
+          print(response.reasonPhrase);
+        }
+      } else {
+        Fluttertoast.showToast(
+            msg: 'Please Enter TL# ',
+            backgroundColor: Colors.redAccent,
+            textColor: Colors.white);
+      }
+    }
+    else{
+      request.fields.addAll({
+        'dealer_id': '${id}',
+        'row_id': '',
+        'depot': '${_mySelection}',
+        'type': '${_site}',
+        'tl_no': '${tlController.text.toString()}',
+        'total': '${sum}',
+        'product': '${jsonString}',
+        'legder_balance': '4000',
+      });
+      http.StreamedResponse response = await request.send();
+      if (response.statusCode == 200) {
+        var ret = await response.stream.bytesToString();
+        if (ret == '1') {
+          Fluttertoast.showToast(
+              msg: 'Order Created Successfully',
+              backgroundColor: Colors.greenAccent,
+              textColor: Colors.black);
+          Navigator.pop(context);
+        } else {
+          Fluttertoast.showToast(
+              msg: 'Order Not Created',
+              backgroundColor: Colors.redAccent,
+              textColor: Colors.white);
+        }
+        // print(await response.stream.bytesToString());
+      }
+      else {
+        print(response.reasonPhrase);
+      }
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     this.getDepot();
+    data1 = fetchData();
+    Containers_sizes();
+  }
+
+  Future<void> Containers_sizes() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var id = prefs.getString("Id");
+    final response = await http.get(Uri.parse(
+        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_containers_sizes.php?key=03201232927&id=1'));
+
+    if (response.statusCode == 200) {
+      print("Hello world");
+      List<dynamic> data = json.decode(response.body);
+      List<String> sizeList =
+      data.map((item) => item['sizes'].toString()).toList();
+      List<String> idList = data.map((item) => item['id'].toString()).toList();
+      setState(() {
+        size_type_list = sizeList;
+        size_id_list = idList;
+        print("MOIZ-1: $size_type_list");
+      });
+    } else {
+      print("object-error");
+      throw Exception('Failed to fetch data from the API');
+    }
+  }
+  Future<List<Map<String, dynamic>>?> fetchData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var id = prefs.getString("Id");
+    account = prefs.getString("account");
+
+    final url = Uri.parse(
+        "http://151.106.17.246:8080/OMCS-CMS-APIS/get/dealers_products.php?key=03201232927&dealer_id=46");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonResponse = json.decode(response.body);
+        print(jsonResponse);
+        sapi = jsonResponse;
+        List<Map<String, dynamic>> data =
+        jsonResponse.cast<Map<String, dynamic>>();
+        print('Samad ${data.length}');
+        hsdtValues = List.filled(data.length, 0);
+        selectedOptions = List.filled(data.length, 0);
+        return data;
+      } else {
+        // Handle the error, e.g., show an error message
+        return null;
+      }
+    } catch (exception) {
+      // Handle exceptions
+      return null;
+    }
   }
 
   int _selectedIndex = 1;
+
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
@@ -74,85 +250,281 @@ class _CreateOrderState extends State<Create_Order> {
       ),
       body: SingleChildScrollView(
           child: Container(
-        padding: EdgeInsets.all(8),
-        child: Column(
-          children: [
-            Card(
-              color: Color(0xffF0F0F0),
-              elevation: 15,
-              child: Container(
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      //CircleAvatar
-                      const SizedBox(
-                        height: 10,
-                      ), //SizedBox
-                      Text(
-                        'Account Balance',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Color(0xff000000),
-                          fontWeight: FontWeight.w300,
-                          fontStyle: FontStyle.normal,
-                        ),
-                      ), //Text
-                      const SizedBox(
-                        height: 30,
-                      ),
-                      Row(
+            padding: EdgeInsets.all(8),
+            child: Column(
+              children: [
+                Card(
+                  color: Color(0xffF0F0F0),
+                  elevation: 15,
+                  child: Container(
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          CircleAvatar(
-                              backgroundColor: Color(0xff12283D),
-                              radius: 15,
-                              child: Icon(
-                                FontAwesomeIcons.cableCar,
-                                color: Colors.white,
-                                size: 15,
-                              ) //Text
-                              ),
-                          SizedBox(
-                            width: 5,
+                          //CircleAvatar
+                          const SizedBox(
+                            height: 10,
+                          ), //SizedBox
+                          Text(
+                            'Account Balance',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: Color(0xff000000),
+                              fontWeight: FontWeight.w300,
+                              fontStyle: FontStyle.normal,
+                            ),
+                          ), //Text
+                          const SizedBox(
+                            height: 30,
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          Row(
                             children: [
-                              Text(
-                                '3,75,000 Rs.',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: Color(0xff000000),
-                                  fontWeight: FontWeight.w600,
-                                  fontStyle: FontStyle.italic,
-                                ),
+                              CircleAvatar(
+                                  backgroundColor: Color(0xff12283D),
+                                  radius: 15,
+                                  child: Icon(
+                                    FontAwesomeIcons.cableCar,
+                                    color: Colors.white,
+                                    size: 15,
+                                  ) //Text
                               ),
-                              Text(
-                                'Updated On : ${formattedDate}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  color: Color(0xff8A8A8A),
-                                  fontWeight: FontWeight.w300,
-                                  fontStyle: FontStyle.italic,
-                                ),
+                              SizedBox(
+                                width: 5,
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'PKR. ${account}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: Color(0xff000000),
+                                      fontWeight: FontWeight.w600,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Updated On : ${formattedDate}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 10,
+                                      color: Color(0xff8A8A8A),
+                                      fontWeight: FontWeight.w300,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
+                          const SizedBox(
+                            height: 10,
+                          ),
                         ],
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                    ],
-                  ), //Column
+                      ), //Column
+                    ),
+                  ), //SizedBox,
                 ),
-              ), //SizedBox,
-            ),
-            SizedBox(
-              height: 20,
-            ),
+                SizedBox(
+                  height: 20,
+                ),
+                FutureBuilder<List<Map<String, dynamic>>?>(
+                  future: data1,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (!snapshot.hasData || snapshot.data == null) {
+                      return Text('No data available.');
+                    } else {
+                      List<Map<String, dynamic>> apiData = snapshot.data!;
+
+                      // Ensure that controllers has the same length as apiData
+                      if (controllers.length < apiData.length) {
+                        controllers.addAll(List.generate(
+                            apiData.length - controllers.length,
+                                (index) => TextEditingController()));
+                      }
+                      // List<String> selectedOptions = List.generate(apiData.length, (index) => '');
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: apiData.length,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Flexible(
+                                  child: SizedBox(
+                                    width: 150,
+                                    child: TextDropdownFormField(
+                                      options: size_type_list,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(18.0),
+                                        ),
+                                        suffixIcon: Icon(
+                                            Icons.arrow_drop_down_circle_outlined),
+                                        labelText: "${apiData[index]['name']}",
+                                      ),
+                                      dropdownHeight: 100,
+                                      onChanged: (dynamic value) {
+                                        if (value.isNotEmpty) {
+                                          setState(() {
+                                            selectedOptions[index] = int.parse(value);
+                                            hsd = int.parse(value) * double.parse("${apiData[index]['indent_price']}");
+                                            hsdtValues[index] = hsd;
+
+                                            print("Hellow brother $hsdtValues");
+                                            print("Hellow brother $selectedOptions");
+                                            updateSum();
+                                          });
+                                        } else {
+                                          print("Enter value");
+                                        };
+                                      },
+                                      onSaved: (dynamic value) {
+                                        if (value.isNotempty) {
+                                          setState(() {
+                                            controllers[index] = value;
+                                            print("my value2 $value");
+                                            hsd = int.parse(value) *
+                                                double.parse(
+                                                    "${apiData[index]['indent_price']}");
+                                            hsdtValues[index] = hsd;
+                                            print("Hellow brother $hsdtValues");
+                                            updateSum();
+                                          });
+                                        } else {
+                                          print("Enter value");
+                                        }
+                                        ;
+                                      },
+                                    ),
+                                    /*
+                                TextFormField(
+                                  onFieldSubmitted: (value) {
+                                    if (value.isNotEmpty) {
+                                      setState(() {
+                                        hsd = int.parse(value) * int.parse("${apiData[index]['indent_price']}");
+                                        hsdtValues[index] = hsd;
+                                        print (hsdtValues);
+                                        updateSum();
+                                      });
+                                    } else {
+                                      print("Enter value");
+                                    }
+                                  },
+                                  onChanged: (value) {
+                                    if (value.isNotEmpty) {
+                                      setState(() {
+                                        hsd = int.parse(value) * int.parse("${apiData[index]['indent_price']}");
+                                        hsdtValues[index] = hsd;
+                                        print (hsdtValues);
+                                        updateSum();
+                                      });
+                                    } else {
+                                      print("Enter value");
+                                    }
+                                  },
+                                  onTapOutside: (value) {
+                                    print(value);
+                                  },
+                                  controller: controllers[index],
+                                  keyboardType: TextInputType.number,
+                                  style: GoogleFonts.poppins(
+                                    color: Color(0xffa8a8a8),
+                                    fontWeight: FontWeight.w300,
+                                    fontSize: 16,
+                                    fontStyle: FontStyle.normal,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintStyle: GoogleFonts.poppins(
+                                      color: Color(0xffa8a8a8),
+                                      fontWeight: FontWeight.w300,
+                                      fontSize: 16,
+                                      fontStyle: FontStyle.normal,
+                                    ),
+                                    labelStyle: GoogleFonts.poppins(
+                                      color: Color(0xffa8a8a8),
+                                      fontWeight: FontWeight.w300,
+                                      fontSize: 16,
+                                      fontStyle: FontStyle.normal,
+                                    ),
+                                    filled: true,
+                                    fillColor: Color(0xffF1F4FF),
+                                    hintText: 'Quantity for ${apiData[index]['name']}',
+                                    focusedBorder: OutlineInputBorder(
+                                        borderSide:
+                                        BorderSide(width: 2, color: Color(0xff3b5fe0)),
+                                        borderRadius:
+                                        BorderRadius.all(Radius.circular(10))),
+                                    border: OutlineInputBorder(
+                                        borderSide:
+                                        BorderSide(width: 2, color: Color(0xffF1F4FF)),
+                                        borderRadius:
+                                        BorderRadius.all(Radius.circular(10))),
+                                    labelText: '${apiData[index]['name']}',
+                                  ),
+                                ),
+
+                                     */
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 15,
+                                ),
+                                Container(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    "x",
+                                    style: TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 15,
+                                ),
+                                Container(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    '${apiData[index]['indent_price']}',
+                                    style: TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 15,
+                                ),
+                                Container(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    "=",
+                                    style: TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 15,
+                                ),
+                                Container(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    hsdtValues[index].toString(),
+                                    style: TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    }
+                  },
+                ),
+                /*
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -447,7 +819,17 @@ class _CreateOrderState extends State<Create_Order> {
                 ),
               ],
             ),
-            SizedBox(height: 10),
+            */
+                SizedBox(height: 10),
+                Text(
+                  'Total Amount: ${sum}',
+                  style: GoogleFonts.montserrat(
+                      fontWeight: FontWeight.w300,
+                      fontStyle: FontStyle.italic,
+                      color: Color(0xff12283D),
+                      fontSize: 13),
+                ),
+                /*
             Container(
               padding: EdgeInsets.symmetric(horizontal: 10.0),
               decoration: BoxDecoration(
@@ -457,24 +839,27 @@ class _CreateOrderState extends State<Create_Order> {
                     style: BorderStyle.solid,
                     width: 0.80),
               ),
+
               child: DropdownButton(
                 underline: Container(), //remove underline
                 isExpanded: true,
-                icon: Padding( //Icon at tail, arrow bottom is default icon
-                    padding: EdgeInsets.only(left:20),
-                    child:Icon(Icons.arrow_circle_down_sharp)
-                ),
+                icon: Padding(
+                    //Icon at tail, arrow bottom is default icon
+                    padding: EdgeInsets.only(left: 20),
+                    child: Icon(Icons.arrow_circle_down_sharp)),
                 iconEnabledColor: Color(0xff12283d),
-                style: const TextStyle(
-                    color: Colors.black54, fontSize: 13),
+                style: const TextStyle(color: Colors.black54, fontSize: 13),
                 items: data.map((item) {
                   return DropdownMenuItem(
-                    child: new Text(item['consignee_name'],style: GoogleFonts.poppins(
-                      color: Color(0xffa8a8a8),
-                      fontWeight: FontWeight.w300,
-                      fontSize: 16,
-                      fontStyle: FontStyle.normal,
-                    ),),
+                    child: new Text(
+                      item['consignee_name'],
+                      style: GoogleFonts.poppins(
+                        color: Color(0xffa8a8a8),
+                        fontWeight: FontWeight.w300,
+                        fontSize: 16,
+                        fontStyle: FontStyle.normal,
+                      ),
+                    ),
                     value: item['id'].toString(),
                   );
                 }).toList(),
@@ -485,126 +870,136 @@ class _CreateOrderState extends State<Create_Order> {
                   });
                 },
                 value: _mySelection,
-                hint: Text("Select Depot",style: GoogleFonts.poppins(
-                  color: Color(0xff000000),
-                  fontWeight: FontWeight.w300,
-                  fontSize: 16,
-                  fontStyle: FontStyle.normal,
-                ),),
+                hint: Text(
+                  "Select Depot",
+                  style: GoogleFonts.poppins(
+                    color: Color(0xff000000),
+                    fontWeight: FontWeight.w300,
+                    fontSize: 16,
+                    fontStyle: FontStyle.normal,
+                  ),
+                ),
               ),
             ),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                Expanded(
-                  child: ListTile(
-                    title:  Text('Self',style:GoogleFonts.montserrat(
-                      fontSize: 14,
-                      color: Color(0xff12283D),
-                      fontWeight: FontWeight.w500,
-                      fontStyle: FontStyle.italic,
-                    ),),
-
-                    leading: Radio(
-                      fillColor: MaterialStateProperty.all(Color(0xff12283D)),
-                      overlayColor:  MaterialStateProperty.all(Color(0xff12283D)),
-                      value: "Self",
-                      groupValue: _site,
-                      onChanged: (value) {
-                        setState(() {
-                          _site = value!;
-                        });
-                      },
+            */
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: <Widget>[
+                    Expanded(
+                      child: ListTile(
+                        title: Text(
+                          'Self',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 14,
+                            color: Color(0xff12283D),
+                            fontWeight: FontWeight.w500,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        leading: Radio(
+                          fillColor: MaterialStateProperty.all(Color(0xff12283D)),
+                          overlayColor:
+                          MaterialStateProperty.all(Color(0xff12283D)),
+                          value: "Self",
+                          groupValue: _site,
+                          onChanged: (value) {
+                            setState(() {
+                              _site = value!;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ListTile(
+                        title: Text(
+                          'GC / Coco',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 14,
+                            color: Color(0xff12283D),
+                            fontWeight: FontWeight.w500,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        leading: Radio(
+                          fillColor: MaterialStateProperty.all(Color(0xff12283D)),
+                          overlayColor:
+                          MaterialStateProperty.all(Color(0xff12283D)),
+                          value: "GC / Coco",
+                          groupValue: _site,
+                          onChanged: (value) {
+                            setState(() {
+                              _site = value!;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_site == "Self")
+                  TextFormField(
+                    controller: tlController,
+                    keyboardType: TextInputType.text,
+                    style: GoogleFonts.poppins(
+                      color: Color(0xffa8a8a8),
+                      fontWeight: FontWeight.w300,
+                      fontSize: 16,
+                      fontStyle: FontStyle.normal,
+                    ),
+                    decoration: InputDecoration(
+                      hintStyle: GoogleFonts.poppins(
+                        color: Color(0xffa8a8a8),
+                        fontWeight: FontWeight.w300,
+                        fontSize: 16,
+                        fontStyle: FontStyle.normal,
+                      ),
+                      labelStyle: GoogleFonts.poppins(
+                        color: Color(0xffa8a8a8),
+                        fontWeight: FontWeight.w300,
+                        fontSize: 16,
+                        fontStyle: FontStyle.normal,
+                      ),
+                      filled: true,
+                      fillColor: Color(0xffF1F4FF),
+                      hintText: 'TL #',
+                      focusedBorder: OutlineInputBorder(
+                          borderSide:
+                          BorderSide(width: 2, color: Color(0xff3b5fe0)),
+                          borderRadius: BorderRadius.all(Radius.circular(10))),
+                      border: OutlineInputBorder(
+                          borderSide:
+                          BorderSide(width: 2, color: Color(0xffF1F4FF)),
+                          borderRadius: BorderRadius.all(Radius.circular(10))),
+                      labelText: 'Enter TL #',
                     ),
                   ),
-                ),
-                Expanded(
-                  child: ListTile(
-                    title: Text('GC / Coco',style:GoogleFonts.montserrat(
-                      fontSize: 14,
-                      color: Color(0xff12283D),
-                      fontWeight: FontWeight.w500,
-                      fontStyle: FontStyle.italic,
-                    ),),
-                    leading: Radio(
-                      fillColor: MaterialStateProperty.all(Color(0xff12283D)),
-                      overlayColor:  MaterialStateProperty.all(Color(0xff12283D)),
-                      value: "GC / Coco",
-                      groupValue: _site,
-                      onChanged: (value) {
-                        setState(() {
-                          _site = value!;
-                        });
-                      },
+                Padding(
+                  padding: EdgeInsets.only(top: 20),
+                  child: MaterialButton(
+                    onPressed: () {
+                      var amount = hsdt + pmgt + hobct;
+                      create();
+                    },
+                    child: Text(
+                      'Create Order',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontFamily: 'SFUIDisplay',
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
+                    color: Color(0xff12283d),
+                    elevation: 0,
+                    minWidth: 350,
+                    height: 60,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50)),
                   ),
                 ),
-
               ],
             ),
-            if (_site == "Self")
-              TextFormField(
-                controller: tlController,
-                keyboardType: TextInputType.text,
-                style: GoogleFonts.poppins(
-                  color: Color(0xffa8a8a8),
-                  fontWeight: FontWeight.w300,
-                  fontSize: 16,
-                  fontStyle: FontStyle.normal,
-                ),
-                decoration: InputDecoration(
-                  hintStyle: GoogleFonts.poppins(
-                    color: Color(0xffa8a8a8),
-                    fontWeight: FontWeight.w300,
-                    fontSize: 16,
-                    fontStyle: FontStyle.normal,
-                  ),
-                  labelStyle: GoogleFonts.poppins(
-                    color: Color(0xffa8a8a8),
-                    fontWeight: FontWeight.w300,
-                    fontSize: 16,
-                    fontStyle: FontStyle.normal,
-                  ),
-                  filled: true,
-                  fillColor: Color(0xffF1F4FF),
-                  hintText: 'TL #',
-                  focusedBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(width: 2, color: Color(0xff3b5fe0)),
-                      borderRadius: BorderRadius.all(Radius.circular(10))),
-                  border: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(width: 2, color: Color(0xffF1F4FF)),
-                      borderRadius: BorderRadius.all(Radius.circular(10))),
-                  labelText: 'Enter TL #',
-                ),
-              ),
-            Padding(
-              padding: EdgeInsets.only(top: 20),
-              child: MaterialButton(
-                onPressed: () {
-                  var amount = hsdt + pmgt + hobct;
-                },
-                child: Text(
-                  'Create Order',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontFamily: 'SFUIDisplay',
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
-                ),
-                color: Color(0xff12283d),
-                elevation: 0,
-                minWidth: 350,
-                height: 60,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50)),
-              ),
-            ),
-          ],
-        ),
-      )),
+          )),
     );
   }
 
