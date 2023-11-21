@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hascol_inspection/screens/login.dart';
+import 'package:hascol_inspection/utils/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Hascol',
+      title: 'Flow Petroleum',
       home: SplashScreen(),
     );
   }
@@ -36,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xffffffff),
+      backgroundColor: Constants.primary_color,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -48,7 +49,8 @@ class _SplashScreenState extends State<SplashScreen> {
                   Positioned(
                       top: 0,
                       right: -100,
-                      child: Image.asset('assets/images/circle.png')),
+                      child: Image.asset('assets/images/circle.png',color: Color(
+                          0x6e7283ff),)),
                   Positioned(
                     child: SvgPicture.asset(
                       'assets/images/welcome image.svg',
@@ -66,11 +68,11 @@ class _SplashScreenState extends State<SplashScreen> {
               children: [
                 Container(
                   child: Text(
-                    'Welcome To Hascol',
+                    'Welcome To Flow',
                     style: GoogleFonts.poppins(
                       textStyle: Theme.of(context).textTheme.displayLarge,
                       fontSize: 28,
-                      color: Color(0xff1F41BB),
+                      color: Constants.secondary_color,
                       fontWeight: FontWeight.w700,
                       fontStyle: FontStyle.normal,
                     ),
@@ -82,7 +84,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     style: GoogleFonts.poppins(
                       textStyle: Theme.of(context).textTheme.displayLarge,
                       fontSize: 28,
-                      color: Color(0xff1F41BB),
+                      color: Constants.secondary_color,
                       fontWeight: FontWeight.w700,
                       fontStyle: FontStyle.normal,
                     ),
@@ -93,10 +95,10 @@ class _SplashScreenState extends State<SplashScreen> {
             SizedBox(
               height: MediaQuery.of(context).size.height / 18,
             ),
-            Image.asset(
-              'assets/images/hascol_logo.png',
+            /*Image.asset(
+              'assets/images/website.png',
               width: 200,
-            ),
+            ),*/
             Container(
               alignment: Alignment.center,
               padding: EdgeInsets.only(left: 80, right: 80,top: 30),
@@ -116,7 +118,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      primary: Color(0xff12283D),
+                      primary: Constants.secondary_color,
                     ),
                     onPressed: () {
                       Navigator.pushReplacement<void, void>(
@@ -137,7 +139,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     child: Text(
                       'Register',
                       style: GoogleFonts.poppins(
-                        color: Color(0xff0A0A0A),
+                        color: Constants.secondary_color,
                         fontWeight: FontWeight.w700,
                         fontStyle: FontStyle.normal,
                       ),
