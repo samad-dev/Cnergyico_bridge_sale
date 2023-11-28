@@ -8,6 +8,8 @@ import 'package:hascol_inspection/screens/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
+import '../utils/constants.dart';
+
 class Login extends StatefulWidget {
   @override
   _LoginState createState() => _LoginState();
@@ -101,19 +103,23 @@ class _LoginState extends State<Login> {
       body: SingleChildScrollView(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.only(top: 150),
+            padding: const EdgeInsets.only(top: 120),
             child: Column(
               children: [
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Image.asset(
+                      'assets/images/website-logo.png',
+                      width: 100,
+                    ),
                     Container(
                       child: Text(
                         'Login Here',
                         style: GoogleFonts.poppins(
                           textStyle: Theme.of(context).textTheme.displayLarge,
                           fontSize: 22,
-                          color: Color(0xff1F41BB),
+                          color: Constants.primary_color,
                           fontWeight: FontWeight.w700,
                           fontStyle: FontStyle.normal,
                         ),
@@ -176,8 +182,7 @@ class _LoginState extends State<Login> {
                             fontStyle: FontStyle.normal,
                           ),
                           focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(width: 2, color: Color(
-                                  0xff3b5fe0)),
+                              borderSide: BorderSide(width: 2, color: Constants.primary_color),
                               borderRadius:
                               BorderRadius.all(Radius.circular(10))),
 
@@ -243,7 +248,7 @@ class _LoginState extends State<Login> {
                         style: GoogleFonts.poppins(
                           textStyle: Theme.of(context).textTheme.displayLarge,
                           fontSize: 14,
-                          color: Color(0xff1F41BB),
+                          color: Constants.primary_color,
                           fontWeight: FontWeight.w600,
                           fontStyle: FontStyle.normal,
                         ),
@@ -265,7 +270,7 @@ class _LoginState extends State<Login> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          primary: Color(0xff12283D),
+                          primary: Constants.primary_color,
 
                         ),
                         onPressed: () {
@@ -278,11 +283,6 @@ class _LoginState extends State<Login> {
                 SizedBox(
                   height: MediaQuery.of(context).size.height / 5,
                 ),
-                Text("Sales Bridge Logo", style: TextStyle(fontSize: 20),)
-                // Image.asset(
-                //   'assets/images/hascol_logo.png',
-                //   width: 200,
-                // ),
               ],
             ),
           ),
