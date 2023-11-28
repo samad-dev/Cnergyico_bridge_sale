@@ -45,6 +45,8 @@ dependencies:
   dropdown_plus: ^0.0.9
   font_awesome_flutter: ^10.4.0
   intl: ^0.17.0
+  fluttertoast: ^8.0.2
+  image_picker: ^1.0.4
 
 dev_dependencies:
   flutter_test:

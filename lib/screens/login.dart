@@ -1,12 +1,88 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hascol_inspection/screens/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class Login extends StatefulWidget {
   @override
   _LoginState createState() => _LoginState();
+}
+final _emailController = TextEditingController();
+final _passwordController = TextEditingController();
+
+Future<void> login(BuildContext context) async {
+  final email = _emailController.text;
+  final password = _passwordController.text;
+
+  if (email.isEmpty || password.isEmpty) {
+    Fluttertoast.showToast(
+        msg: "Please Fill Credentials",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.SNACKBAR,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+    return;
+  }
+
+  final url = Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/login.php?key=03201232927&username=$email&password=$password');
+  final response = await http.get(url);
+  if (response.statusCode == 200) {
+    final jsons = json.decode(response.body);
+    if (jsons.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setBool('isLoggedIn', true);
+      print(jsons[0]['name']);
+      prefs.setString("Id", jsons[0]["id"]);
+      prefs.setString("name", jsons[0]["name"].toString());
+      prefs.setString("contact", jsons[0]["contact"].toString());
+      prefs.setString("privilege", jsons[0]["privilege"].toString());
+      prefs.setString("login", jsons[0]["login"].toString());
+      prefs.setString("password", jsons[0]["password"].toString());
+      prefs.setString("usersetting", jsons[0]["userSettings_id"].toString());
+      prefs.setString("status", jsons[0]["status"].toString());
+      prefs.setString("description", jsons[0]["description"].toString());
+      prefs.setString("address", jsons[0]["address"].toString());
+      prefs.setString("telephone", jsons[0]["telephone"].toString());
+      prefs.setString("email", jsons[0]["email"].toString());
+      prefs.setString("notify", jsons[0]["notify"].toString());
+      prefs.setString("subacc_id", jsons[0]["subacc_id"].toString());
+      prefs.setString("allowed_actions", jsons[0]["allowed_actions"].toString());
+      prefs.setString("independent_exist", jsons[0]["independent_exist"].toString());
+      prefs.setString("image", jsons[0]["image"].toString());
+
+      Navigator.pushReplacement<void, void>(context,MaterialPageRoute<void>(builder: (BuildContext context) => Home(),),);
+    } else {
+      // Incorrect credentials
+      Fluttertoast.showToast(
+          msg: "Incorrect Credentials. Please Try Again",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.SNACKBAR,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0
+      );
+    }
+  } else {
+    // Handle the HTTP error
+    Fluttertoast.showToast(
+        msg: "HTTP Request Failed",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.SNACKBAR,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+  }
 }
 
 class _LoginState extends State<Login> {
@@ -15,6 +91,8 @@ class _LoginState extends State<Login> {
     super.initState();
     // getValue();
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +152,7 @@ class _LoginState extends State<Login> {
                     Container(
                       padding: EdgeInsets.only(left: 38, right: 38),
                       child: TextField(
+                        controller: _emailController,
                         style: GoogleFonts.poppins(
                           color: Color(0xffa8a8a8),
                           fontWeight: FontWeight.w300,
@@ -116,6 +195,7 @@ class _LoginState extends State<Login> {
                     Container(
                       padding: EdgeInsets.only(left: 38, right: 38),
                       child: TextField(
+                        controller: _passwordController,
                         style: GoogleFonts.poppins(
                           color: Color(0xffa8a8a8),
                           fontWeight: FontWeight.w300,
@@ -189,12 +269,7 @@ class _LoginState extends State<Login> {
 
                         ),
                         onPressed: () {
-                          Navigator.pushReplacement<void, void>(
-                            context,
-                            MaterialPageRoute<void>(
-                              builder: (BuildContext context) => Home(),
-                            ),
-                          );
+                          login(context);
                         },
                       ),
                     ),

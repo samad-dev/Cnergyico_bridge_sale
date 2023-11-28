@@ -1,165 +1,281 @@
-import 'package:fl_chart/fl_chart.dart';
-import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:google_fonts/google_fonts.dart';
-
-import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 import 'package:im_stepper/stepper.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class CaseData {
+  String id;
+  String title;
+  List<String> questionIds;
+  List<String> questions;
+  List<bool?> responses;
+
+  CaseData({
+    required this.id,
+    required this.questionIds,
+    required this.title,
+    required this.questions,
+    required this.responses,
+  });
+}
 
 class Inspection extends StatefulWidget {
+  final String? dealer_id; // Change here
+  const Inspection({Key? key, this.dealer_id}) : super(key: key);
   @override
   _InspectionState createState() => _InspectionState();
 }
 
 class _InspectionState extends State<Inspection> {
+  int activeStep = 0;
+  List<CaseData> cases = [];
+
   @override
   void initState() {
     super.initState();
+    fetchData();
   }
 
-  int activeStep =0; // Initial step set to 5.
+  Future<void> fetchData() async {
+    final response = await http.get(Uri.parse(
+        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_servey_data.php?key=03201232927'));
 
-  int upperBound = 6;
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
 
-  int _selectedIndex = 1;
+      setState(() {
+        cases = data.map((category) {
+          return CaseData(
+            id: category['id'].toString(),
+            title: category['name'],
+            questions: (category['Questions'] as List)
+                .map((question) => question['question'] as String)
+                .toList(),
+            questionIds: (category['Questions'] as List)
+                .map((question) => question['id'] as String)
+                .toList(),
+            responses: List<bool?>.filled(
+                (category['Questions'] as List).length, null),
+          );
+        }).toList();
+      });
+    } else {
+      // Handle the error
+      print('Failed to load data. Error: ${response.statusCode}');
+    }
+  }
+  Future<void> postSurveyData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userId = prefs.getString('Id'); // Replace 'user_id' with the actual key used in SharedPreferences
+    if (userId == null) {
+      // Handle the case where user_id is null
+      print('User ID is null');
+      return;
+    }
+    String apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/create/create_servey.php';
+    List<Map<String, dynamic>> jsonDataList = [];
+    for (var caseData in cases) {
+      jsonDataList.add({
+        caseData.id: List.generate(
+          caseData.questionIds.length,
+              (index) => {
+            '${caseData.questionIds[index]}': caseData.responses[index] == true ? 'Yes' : 'No'
+          },
+        ),
+      });
+    }
+    Map<String, dynamic> postData = {
+      'user_id': userId,
+      'response': json.encode(jsonDataList),
+      'dealer_id': widget.dealer_id,
+    };
+    try {
+      final response = await http.post(Uri.parse(apiUrl), body: postData);
+      if (response.statusCode == 200) {
+        // Successfully posted data
+        print('Data posted successfully');
+      } else {
+        // Handle the error
+        print('Failed to post data. Error: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle the exception
+      print('Exception while posting data: $error');
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('EEE d MMM kk:mm:ss').format(now);
+
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 0,
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back_ios),
-          //replace with our own icon data.
-        ),
-        iconTheme: IconThemeData(
-          color: Colors.black, //change your color here
-        ),
-        backgroundColor: Colors.white,
-        elevation: 10,
-        title: Text(
-          'Inspection',
-          style: GoogleFonts.montserrat(
-              fontWeight: FontWeight.w700,
-              fontStyle: FontStyle.normal,
-              color: Color(0xff12283D),
-              fontSize: 16),
-        ),
+        title: Text('Inspection Form'),
       ),
-      // Here we have initialized the stepper widget
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
             NumberStepper(
-              stepReachedAnimationEffect: Curves.easeIn,
-              enableStepTapping: true,
-              activeStepColor: Color(0xff12283d),
-              activeStepBorderPadding: 4,
-              stepPadding: 0,
-              stepRadius: 18,
-              lineColor: Color(0xff8d8d8d),
-              nextButtonIcon:Icon(FluentIcons.next_frame_24_regular,color: Color(0xff12283d),),
-              previousButtonIcon: Icon(FluentIcons.previous_frame_24_regular,color: Color(0xff12283d),),
-              numbers: [
-                1,2,3,4,5,6,
-              ],
-
-              numberStyle: GoogleFonts.montserrat(
-                  fontWeight: FontWeight.w400,
-                  fontStyle: FontStyle.normal,
-                  color: Color(0xffffffff),
-                  fontSize: 12),
-              activeStepBorderColor: Color(0xff32a58b),
-              stepColor: Color(0xff55a5f1),
-
-              // activeStep property set to activeStep variable defined above.
+              numbers: List.generate(cases.length, (index) => index + 1),
               activeStep: activeStep,
-
-              // This ensures step-tapping updates the activeStep.
               onStepReached: (index) {
                 setState(() {
                   activeStep = index;
                 });
               },
             ),
-            Divider(color: Color(0xffafabab),height: 2,thickness: 2,),
+            Divider(
+              color: Color(0xffafabab),
+              height: 2,
+              thickness: 2,
+            ),
             SizedBox(height: 5,),
             header(),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _icon(0, text: "Are decanting instructions available in tank area?"),
-                  // _icon(1, text: "Maybe", icon: Icons.local_movies),
-                ],
+          ],
+        ),
+      ),
+      floatingActionButton: activeStep == cases.length - 1
+          ? FloatingActionButton(
+        onPressed: () {
+          List<Map<String, dynamic>> unansweredQuestions = [];
+          if (validateResponses(unansweredQuestions)) {
+            printData();
+          } else {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  content: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Please answer all the questions before submitting.'),
+                      SizedBox(height: 10),
+                      Text('Unanswered Questions:'),
+                      for (var unanswered in unansweredQuestions)
+                        Text(
+                          '${unanswered['stepperName']}: ${unanswered['questions'].map((q) => 'Q$q').join(', ')}',
+                        ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+        },
+        child: Icon(Icons.send_rounded),
+      )
+          : null,
+    );
+  }
+
+  Widget header() {
+    return headerText();
+  }
+
+  Widget headerText() {
+    if (activeStep >= 0 && activeStep < cases.length) {
+      return CaseWidget(context, cases[activeStep]);
+    } else {
+      return Container(); // handle out-of-bounds case
+    }
+  }
+
+  Widget _icon(int index, {required CaseData caseData}) {
+    String question = caseData.questions[index];
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: InkResponse(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(question,
+              style: GoogleFonts.montserrat(
+                fontWeight: FontWeight.w200,
+                fontStyle: FontStyle.normal,
+                color: Color(0xff12283D),
+                fontSize: 16,
+              ),
+              maxLines: 30,
+              overflow: TextOverflow.ellipsis,
             ),
-            // Row(
-            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //   children: [
-            //     previousButton(),
-            //     nextButton(),
-            //   ],
-            // ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ResponseWidgets(
+                  caseData: caseData,
+                  questionIndex: index,
+                  onChanged: (bool? value) {
+                    updateResponse(caseData, index, value);
+                  },
+                ),
+                if (valueIsNo(caseData, index))
+                  GestureDetector(
+                    onTap: (){
+                      print("Camera on");
+                    },
+                    child: IconButton(
+                      icon: Icon(Icons.camera_alt),
+                      onPressed: () {
+                        // Handle camera icon click
+                        // This can be a function to open the camera or any other action
+                      },
+                    ),
+                  ),
+              ],
+            )
           ],
         ),
       ),
     );
   }
 
-  /// Returns the next button.
-  Widget nextButton() {
-    return ElevatedButton(
-      onPressed: () {
-        // Increment activeStep, when the next button is tapped. However, check for upper bound.
-        if (activeStep < upperBound) {
-          setState(() {
-            activeStep++;
-          });
-        }
-      },
-      child: Text('Next'),
-    );
+  bool valueIsNo(CaseData caseData, int questionIndex) {
+    return caseData.responses[questionIndex] == false;
   }
 
-  /// Returns the previous button.
-  Widget previousButton() {
-    return ElevatedButton(
-      onPressed: () {
-        // Decrement activeStep, when the previous button is tapped. However, check for lower bound i.e., must be greater than 0.
-        if (activeStep > 0) {
-          setState(() {
-            activeStep--;
-          });
-        }
-      },
-      child: Text('Prev'),
-    );
-  }
 
-  /// Returns the header wrapping the header text.
-  Widget header() {
-    return Card(
-      color: Color(0xff12283d),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-
+  Widget CaseWidget(BuildContext context, CaseData caseData) {
+    return Container(
+      child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              headerText(),
-              style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w300,
-
-                  fontStyle: FontStyle.italic,
-                  color: Color(0xffffffff),
-                  fontSize: 22),
+          Card(
+            color: Color(0xff12283D),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: MediaQuery.of(context).size.width / 3,
+                  vertical: 10),
+              child: Text(
+                caseData.title, // Change this to category_id
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          Container(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(
+                caseData.questions.length,
+                    (index) => _icon(index, caseData: caseData),
+              ),
             ),
           ),
         ],
@@ -167,72 +283,96 @@ class _InspectionState extends State<Inspection> {
     );
   }
 
-  // Returns the header text based on the activeStep.
-  String headerText() {
-    switch (activeStep) {
-      case 0:
-        return 'Tank Area';
-
-      case 1:
-        return 'Electricity';
-
-      case 2:
-        return 'Fore Court';
-
-      case 3:
-        return 'Earthing Results';
-
-      case 4:
-        return 'Emergency Preparedness';
-
-      case 5:
-        return 'House Keeping';
-
-      default:
-        return 'Introduction';
-    }
+  void updateResponse(CaseData caseData, int questionIndex, bool? value) {
+    setState(() {
+      caseData.responses[questionIndex] = value;
+    });
   }
-  int ?_selected;
-  Widget _icon(int index, {required String text}) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: InkResponse(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  void printData() {
+    List<Map<String, dynamic>> jsonDataList = [];
+
+    for (var caseData in cases) {
+      jsonDataList.add({
+        caseData.id: List.generate(
+          caseData.questionIds.length,
+              (index) => {
+            '${caseData.questionIds[index]}': caseData.responses[index] == true ? 'Yes' : 'No'
+          },
+        ),
+      });
+    }
+
+    print(json.encode(jsonDataList));
+    postSurveyData();
+  }
+
+
+  bool validateResponses(List<Map<String, dynamic>> unansweredQuestions) {
+    unansweredQuestions.clear();
+
+    for (var i = 0; i < cases.length; i++) {
+      var caseData = cases[i];
+
+      if (caseData.responses.contains(null)) {
+        var unansweredQuestionNumbers = [];
+        for (var j = 0; j < caseData.responses.length; j++) {
+          if (caseData.responses[j] == null) {
+            unansweredQuestionNumbers.add(j + 1); // Adding 1 to convert to 1-based index
+          }
+        }
+        unansweredQuestions.add({
+          'stepperName': caseData.title, // Use the title property instead of index
+          'questions': unansweredQuestionNumbers,
+        });
+      }
+    }
+
+    return unansweredQuestions.isEmpty;
+  }
+}
+
+class ResponseWidgets extends StatelessWidget {
+  final CaseData caseData;
+  final int questionIndex;
+  final void Function(bool?) onChanged;
+
+  const ResponseWidgets({
+    required this.caseData,
+    required this.questionIndex,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Column(
           children: [
-            SizedBox(
-              width: 250,
-              child: Text(text,style: GoogleFonts.montserrat(
-                  fontWeight: FontWeight.w200,
-                  fontStyle: FontStyle.normal,
-                  color: Color(0xff12283D),
-                  fontSize: 16),
-              maxLines: 30,
-              overflow: TextOverflow.ellipsis,),
+            Radio(
+              value: true,
+              groupValue: caseData.responses[questionIndex],
+              onChanged: onChanged,
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Icon(
-                  _selected == index ?  FluentIcons.checkbox_unchecked_24_regular : FluentIcons.checkbox_checked_24_regular,
-                  color: _selected == index ? Colors.green : null,
-                ),
-                Icon(
-                  _selected == index ?  Icons.cancel_outlined : Icons.cancel,
-                  color: _selected == index ? Colors.red : null,
-                ),
-              ],
-            ),
-
-
+            Text('Yes'),
           ],
         ),
-        // onTap: () => setState(
-        //       () {
-        //     _selected = index;
-        //   },
-        // ),
-      ),
+        Column(
+          children: [
+            Radio(
+              value: false,
+              groupValue: caseData.responses[questionIndex],
+              onChanged: onChanged,
+            ),
+            Text('No'),
+          ],
+        ),
+      ],
     );
   }
+}
+
+void main() {
+  runApp(MaterialApp(
+    home: Inspection(),
+  ));
 }

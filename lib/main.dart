@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hascol_inspection/screens/home.dart';
 import 'package:hascol_inspection/screens/login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,6 +22,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
+
 class SplashScreen extends StatefulWidget {
   @override
   _SplashScreenState createState() => _SplashScreenState();
@@ -32,7 +34,20 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     // getValue();
   }
+  Future<void> checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
+    // Navigate to the appropriate screen based on the login status
+    if (isLoggedIn) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => Home(),
+        ),
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,7 +132,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      primary: Color(0xff12283D),
+                      backgroundColor: Color(0xff12283D),
                     ),
                     onPressed: () {
                       Navigator.pushReplacement<void, void>(
