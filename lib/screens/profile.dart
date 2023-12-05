@@ -10,6 +10,7 @@ import 'package:hascol_inspection/screens/login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
+import '../main.dart';
 import 'order_list.dart';
 
 class Profile extends StatefulWidget {
@@ -162,24 +163,40 @@ class _ProfileState extends State<Profile> {
                             ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  FluentIcons.power_24_regular,
-                                  size: 25,
-                                ),
-                                SizedBox(width: 5,),
-                                Text(
-                                  'Logout',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: Color(0xff000000),
-                                    fontWeight: FontWeight.w600,
-                                    fontStyle: FontStyle.normal,
+                              child:GestureDetector(
+                                onTap: () async {
+                                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                                  await prefs.clear();
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => MyApp()),
+                                        (route) => false, // Remove all routes from the stack
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        FluentIcons.power_24_regular,
+                                        size: 25,
+                                      ),
+                                      SizedBox(width: 5,),
+                                      Container(
+                                        child: Text(
+                                          'Logout',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            color: Color(0xff000000),
+                                            fontWeight: FontWeight.w600,
+                                            fontStyle: FontStyle.normal,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
+                              )
                           )
                         ],
                       ),
@@ -283,4 +300,10 @@ class _ProfileState extends State<Profile> {
           )
         ],
       ));
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('isLoggedIn', false); // Clear login status
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => SplashScreen(),),
+    );
+  }
 }

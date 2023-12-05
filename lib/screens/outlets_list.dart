@@ -10,9 +10,12 @@ import 'package:hascol_inspection/screens/create_order.dart';
 import 'package:hascol_inspection/screens/home.dart';
 import 'package:hascol_inspection/screens/login.dart';
 import 'package:hascol_inspection/screens/profile.dart';
+import 'package:hascol_inspection/screens/stock_reconcile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+
+import '../utils/constants.dart';
 
 class Outlets extends StatefulWidget {
   static const Color contentColorOrange = Color(0xFF00705B);
@@ -104,288 +107,342 @@ class _OutletsState extends State<Outlets> {
                       itemCount: filteredData.length,
                       itemBuilder: (BuildContext context, int index2) {
                         final ledger = filteredData[index2]['acount'];
+                        final dealer_id = filteredData[index2]['id'];
                         final location = filteredData[index2]['location'];
                         final contact = filteredData[index2]['contact'];
                         final sap_no = filteredData[index2]["sap_no"];
                         final name=filteredData[index2]["name"];
                         return Card(
                           elevation: 10,
-                          color: Colors.white,//Color(0xffF0F0F0),
+                          color: Color(0xffe9e9e9),//Color(0xffF0F0F0),
                           child: Container(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Column(
                                 children: [
-                                  Column(
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(10),
-                                        child: CircleAvatar(
-                                          radius:
-                                          28, // Adjust the size of the circular avatar
-                                          backgroundColor: Color(0xffE7AD18),
-                                          child: Image.asset(
-                                            "assets/images/boss.png",
-                                            width: 38,
-                                            height: 38,
+                                      /*
+                                      Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(10),
+                                            child: CircleAvatar(
+                                              radius:
+                                              28, // Adjust the size of the circular avatar
+                                              backgroundColor: Constants.secondary_color,
+                                              child: ColorFiltered(
+                                                colorFilter: ColorFilter.mode(
+                                                  Colors.white,
+                                                  BlendMode.srcIn,
+                                                ),
+                                                child: Image.asset(
+                                                  "assets/images/boss.png",
+                                                  width: 38,
+                                                  height: 38,
+                                                ),
+                                              ),
+                                            ),
                                           ),
+                                        ],
+                                      ),
+                                      */
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child:
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(left: 8.0),
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Container(
+                                                          padding: EdgeInsets.only(top:16),
+                                                          width: MediaQuery.of(context).size.width/2.39,
+                                                          child: Text(
+                                                            '$name',
+                                                            style: GoogleFonts.montserrat(
+                                                                fontWeight: FontWeight.w600,
+                                                                fontStyle: FontStyle.normal,
+                                                                color: Color(0xff12283D),
+                                                                fontSize: 16),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                                Column(
+                                                  children: [
+                                                    Container(
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                        child: Icon(Icons.graphic_eq)
+                                                      ),
+                                                    ),
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child:
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(left: 8.0),
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Container(
+                                                          width: MediaQuery.of(context).size.width/1.8,
+                                                          child: Text(
+                                                            '$location',
+                                                            style: GoogleFonts.montserrat(
+                                                                fontWeight: FontWeight.w200,
+                                                                fontStyle: FontStyle.normal,
+                                                                color: Colors.black54,
+                                                                fontSize: 12),
+                                                            maxLines: 2,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                                Column(
+                                                  children: [
+                                                    Container(
+                                                      child: Padding(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                          child: GestureDetector(
+                                                              child: Text("Details"),
+                                                            onTap: (){
+                                                              showDialog(
+                                                                context: context,
+                                                                builder: (BuildContext context) {
+                                                                  return AlertDialog(
+                                                                    title: Text('Details:'),
+                                                                    content: Container(
+                                                                      height: MediaQuery.of(context).size.width/1.5,
+                                                                        width: MediaQuery.of(context).size.width/1.2,
+                                                                        child:
+                                                                        Column(
+                                                                          mainAxisAlignment:MainAxisAlignment.start,
+                                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                                          children: [
+                                                                            Text(
+                                                                              'Name: ',
+                                                                              style: GoogleFonts.montserrat(
+                                                                                  fontWeight: FontWeight.w600,
+                                                                                  fontStyle: FontStyle.normal,
+                                                                                  color: Color(0xff12283D),
+                                                                                  fontSize: 16),
+                                                                              maxLines: 1,
+                                                                              overflow: TextOverflow.ellipsis,
+                                                                            ),
+                                                                            Padding(
+                                                                              padding: const EdgeInsets.only(left:12.0),
+                                                                              child: Container(
+                                                                                width: MediaQuery.of(context).size.width/2,
+                                                                                child: Text(
+                                                                                  '$name',
+                                                                                  style: GoogleFonts.montserrat(
+                                                                                      fontStyle: FontStyle.normal,
+                                                                                      color: Color(0xff12283D),
+                                                                                      fontSize: 16),
+                                                                                  maxLines: 1,
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                            Text(
+                                                                              'location: ',
+                                                                              style: GoogleFonts.montserrat(
+                                                                                  fontWeight: FontWeight.w600,
+                                                                                  fontStyle: FontStyle.normal,
+                                                                                  color: Color(0xff12283D),
+                                                                                  fontSize: 16),
+                                                                              maxLines: 1,
+                                                                              overflow: TextOverflow.ellipsis,
+                                                                            ),
+                                                                            Padding(
+                                                                              padding: const EdgeInsets.only(left:12.0),
+                                                                              child: Container(
+                                                                                width: MediaQuery.of(context).size.width/1.5,
+                                                                                child: Text(
+                                                                                  '$location',
+                                                                                  style: GoogleFonts.montserrat(
+                                                                                      fontStyle: FontStyle.normal,
+                                                                                      color: Color(0xff12283D),
+                                                                                      fontSize: 16),
+                                                                                  maxLines: 2,
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                            Row(
+                                                                              children: [
+                                                                                Text(
+                                                                                  'Phone Number : ',
+                                                                                  style: GoogleFonts.montserrat(
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      fontStyle: FontStyle.normal,
+                                                                                      color: Color(0xff12283D),
+                                                                                      fontSize: 16),
+                                                                                  maxLines: 1,
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                ),
+                                                                                Text(
+                                                                                  '$contact',
+                                                                                  style: GoogleFonts.montserrat(
+                                                                                      fontStyle: FontStyle.normal,
+                                                                                      color: Color(0xff12283D),
+                                                                                      fontSize: 16),
+                                                                                  maxLines: 1,
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                            Row(
+                                                                              children: [
+                                                                                Text(
+                                                                                  'SAP Number : ',
+                                                                                  style: GoogleFonts.montserrat(
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      fontStyle: FontStyle.normal,
+                                                                                      color: Color(0xff12283D),
+                                                                                      fontSize: 16),
+                                                                                  maxLines: 1,
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                ),
+                                                                                Text(
+                                                                                  '$sap_no',
+                                                                                  style: GoogleFonts.montserrat(
+                                                                                      fontStyle: FontStyle.normal,
+                                                                                      color: Color(0xff12283D),
+                                                                                      fontSize: 16),
+                                                                                  maxLines: 1,
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                            Row(
+                                                                              children: [
+                                                                                Text(
+                                                                                  'Ledger: ',
+                                                                                  style: GoogleFonts.montserrat(
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      fontStyle: FontStyle.normal,
+                                                                                      color: Color(0xff12283D),
+                                                                                      fontSize: 16),
+                                                                                  maxLines: 1,
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                ),
+                                                                                Text(
+                                                                                  'Rs.$ledger',
+                                                                                  style: GoogleFonts.montserrat(
+                                                                                      fontStyle: FontStyle.normal,
+                                                                                      color: Color(0xff12283D),
+                                                                                      fontSize: 16),
+                                                                                  maxLines: 1,
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                          ],
+                                                                        )
+                                                                    ),
+                                                                    actions: [
+                                                                      TextButton(
+                                                                        onPressed: () {
+                                                                          Navigator.pop(context); // Close the dialog
+                                                                        },
+                                                                        child: Text('OK'),
+                                                                      ),
+                                                                    ],
+                                                                  );
+                                                                },
+                                                              );
+                                                            },
+                                                          ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                  Divider(
+                                    color: Colors.grey.shade300,  // Set the color of the divider
+                                    height: 20,           // Set the height of the divider
+                                    thickness: 2,          // Set the thickness of the divider
+                                  ),
+
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
                                       children: [
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child:
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Container(
-                                                    width: MediaQuery.of(context).size.width/2.39,
-                                                    child: Text(
-                                                      '$name',
-                                                      style: GoogleFonts.montserrat(
-                                                          fontWeight: FontWeight.w600,
-                                                          fontStyle: FontStyle.normal,
-                                                          color: Color(0xff12283D),
-                                                          fontSize: 16),
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            // Add your button press logic here
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            elevation: 4.0,
+                                            primary: Constants.secondary_color, // Set the button color
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(20.0), // Set your preferred border radius here
                                             ),
-                                            Column(
-                                              children: [
-                                                Container(
-                                                  decoration: BoxDecoration(
-                                                    color: Color(0xffE7AD18),
-                                                    borderRadius: BorderRadius.only(
-                                                      topLeft: Radius.circular(12.0), // Curved top left corner
-                                                      bottomLeft: Radius.circular(12.0), // Curved bottom left corner
-                                                    ),
-                                                  ),
-                                                  child: Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                    child: Text(
-                                                      ' $sap_no ',
-                                                      style: GoogleFonts.poppins(
-                                                        fontWeight: FontWeight.w500,
-                                                        fontStyle: FontStyle.normal,
-                                                        color: Colors.white,
-                                                        fontSize: 12,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            )
-                                          ],
-                                        ),
-                                        Container(
-                                          width: MediaQuery.of(context).size.width/1.55,
-                                          child: Text(
-                                            '$location',
-                                            style: GoogleFonts.montserrat(
-                                                fontWeight: FontWeight.w200,
-                                                fontStyle: FontStyle.normal,
-                                                color: Color(0xff636465),
-                                                fontSize: 12),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(FluentIcons.arrow_download_16_filled, color: Colors.white), // Download icon
+                                              SizedBox(width: 8.0), // Add some space between icon and text
+                                              Text(
+                                                'Download Ledger',
+                                                style: TextStyle(color: Colors.white),
+                                              ), // Button text
+                                            ],
                                           ),
                                         ),
-                                        Text(
-                                          'ledger Balance: $ledger PKR.',
-                                          style: GoogleFonts.montserrat(
-                                              fontWeight: FontWeight.w600,
-                                              fontStyle: FontStyle.normal,
-                                              color: Color(0xff3B8D5A),
-                                              fontSize: 12),
-                                        ),
-                                        Text(
-                                          'Contact #: $contact',
-                                          style: GoogleFonts.montserrat(
-                                              fontWeight: FontWeight.w300,
-                                              fontStyle: FontStyle.normal,
-                                              color: Color(0xff9b9b9b),
-                                              fontSize: 12),
+                                        SizedBox(width: 5,),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(builder: (context) => StockReconcilePage(dealer_id:dealer_id)),
+                                            );
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            elevation: 4.0,
+                                            backgroundColor: Constants.secondary_color,// Set the button color
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(20.0), // Set your preferred border radius here
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text('Stock Reconcile',style: TextStyle(color: Colors.white)),// Button text
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  /*
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Card(
-                                        color: Color(0xffFFF3D4),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(3.0),
-                                          child: Text(
-                                            'In Progress',
-                                            style: GoogleFonts.poppins(
-                                                fontWeight: FontWeight.w500,
-                                                fontStyle: FontStyle.normal,
-                                                color: Color(0xffE7AD18),
-                                                fontSize: 12),
-                                          ),
-                                        ),
-                                      ),
-                                      Text(
-                                        'Waiting For Approval',
-                                        style: GoogleFonts.montserrat(
-                                            fontWeight: FontWeight.w300,
-                                            fontStyle: FontStyle.normal,
-                                            color: Color(0xff9b9b9b),
-                                            fontSize: 12),
-                                      ),
-                                      SizedBox(
-                                        height: 3,
-                                      ),
-                                      SizedBox(
-                                        width: 90,
-                                        height: 20,
-                                        child: ElevatedButton(
-                                          child: Text(
-                                            'Shortage',
-                                            style: GoogleFonts.poppins(
-                                              fontWeight: FontWeight.w100,
-                                              fontSize: 11,
-                                              fontStyle: FontStyle.normal,
-                                            ),
-                                          ),
-                                          style: ElevatedButton.styleFrom(
-                                              primary: Color(0xff12283D),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(18.0),
-                                              )),
-                                          onPressed: () {
-                                            showModalBottomSheet(
-                                              context: context,
-                                              builder: (context) {
-                                                return Container(
-                                                  color: Colors.white54,
-                                                  child: Column(
-                                                    children: [
-                                                      SizedBox(height: 30,),
-                                                      Icon(
-                                                        FontAwesomeIcons.cameraRetro,
-                                                        color: Color(0xff12283d),
-                                                        size: 160,
-                                                      ),
-                                                      Text(
-                                                        'Click Here To Upload Photos',
-                                                        style: GoogleFonts.poppins(
-                                                          fontWeight: FontWeight.w500,
-                                                          fontSize: 16,
-                                                          fontStyle: FontStyle.normal,
-                                                        ),
-                                                      ),
-                                                      Padding(
-                                                        padding: const EdgeInsets.all(18.0),
-                                                        child: SizedBox(
-                                                          height: 50,
-                                                          child: TextFormField(
-
-                                                            onFieldSubmitted: (value) {
-                                                              print(value);
-
-                                                            },
-                                                            keyboardType: TextInputType.number,
-                                                            style: GoogleFonts.poppins(
-                                                              color: Color(0xffa8a8a8),
-                                                              fontWeight: FontWeight.w300,
-                                                              fontSize: 16,
-                                                              fontStyle: FontStyle.normal,
-                                                            ),
-                                                            decoration: InputDecoration(
-                                                              hintStyle: GoogleFonts.poppins(
-                                                                color: Color(0xffa8a8a8),
-                                                                fontWeight: FontWeight.w300,
-                                                                fontSize: 16,
-                                                                fontStyle: FontStyle.normal,
-                                                              ),
-                                                              labelStyle: GoogleFonts.poppins(
-                                                                color: Color(0xffa8a8a8),
-                                                                fontWeight: FontWeight.w300,
-                                                                fontSize: 16,
-                                                                fontStyle: FontStyle.normal,
-                                                              ),
-                                                              filled: true,
-                                                              fillColor: Color(0xffF1F4FF),
-                                                              hintText: 'Recieved',
-                                                              focusedBorder: OutlineInputBorder(
-                                                                  borderSide:
-                                                                  BorderSide(width: 2, color: Color(0xff3b5fe0)),
-                                                                  borderRadius:
-                                                                  BorderRadius.all(Radius.circular(10))),
-                                                              border: OutlineInputBorder(
-                                                                  borderSide:
-                                                                  BorderSide(width: 2, color: Color(0xffF1F4FF)),
-                                                                  borderRadius:
-                                                                  BorderRadius.all(Radius.circular(10))),
-                                                              labelText: 'Recieved Qty',
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Padding(
-                                                        padding: EdgeInsets.only(top: 20),
-                                                        child: MaterialButton(
-                                                          onPressed: () {
-
-                                                          },
-                                                          child: Text(
-                                                            'Add Shortage',
-                                                            style: TextStyle(
-                                                                fontSize: 15,
-                                                                fontFamily: 'SFUIDisplay',
-                                                                fontWeight: FontWeight.bold,
-                                                                color: Colors.white),
-                                                          ),
-                                                          color: Color(0xff12283d),
-                                                          elevation: 0,
-                                                          minWidth: 350,
-                                                          height: 60,
-                                                          shape: RoundedRectangleBorder(
-                                                              borderRadius: BorderRadius.circular(10)),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                      TextButton.icon(
-                                        // <-- TextButton
-                                        onPressed: () {},
-                                        icon: Icon(
-                                          FluentIcons.drawer_arrow_download_24_regular,
-                                          size: 16.0,
-                                          color: Color(0xff12283D),
-                                        ),
-                                        label: Text(
-                                          'Invoice',
-                                          style: GoogleFonts.montserrat(
-                                              fontWeight: FontWeight.w300,
-                                              fontStyle: FontStyle.normal,
-                                              color: Color(0xff12283D),
-                                              fontSize: 12),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  */
                                 ],
                               ),
                             ),

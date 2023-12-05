@@ -47,6 +47,8 @@ dependencies:
   intl: ^0.17.0
   fluttertoast: ^8.0.2
   image_picker: ^1.0.4
+  permission_handler: ^10.1.0
+  signature: ^5.4.1
 
 dev_dependencies:
   flutter_test:

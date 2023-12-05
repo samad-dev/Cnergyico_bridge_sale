@@ -45,6 +45,14 @@ class _CreateOrderState extends State<Create_Order> {
   List<String> size_id_list = [];
   String? selectedsizeformId;
   String? selectedsizeformType;
+
+  List<String> dealer_name_list = [];
+  List<String> dealer_id_list = [];
+  List<String> dealer_account_list = [];
+  String? selected_dealer_Id;
+  String? selected_dealer_name;
+  String? selected_dealer_account;
+
   var _site = "Self";
   double sum = 0.0;
   void updateSum() {
@@ -54,11 +62,9 @@ class _CreateOrderState extends State<Create_Order> {
 
     print("Sum: $sum");
   }
-
   create() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-   // var id = prefs.getString("Id");
-    var id = 46;
+   var id = prefs.getString("Id");
     // var legder_balance = prefs.getString("account");
     var legder_balance = 0;
     List<Map<String, dynamic>> jsonArray = [];
@@ -84,14 +90,16 @@ class _CreateOrderState extends State<Create_Order> {
     if (_site == "Self") {
       if (tlController.text.isNotEmpty) {
         request.fields.addAll({
-          'dealer_id': '${id}',
+          'dealer_id': '$selected_dealer_Id',
           'row_id': '',
           'depot': '${_mySelection}',
           'type': '${_site}',
           'tl_no': '${tlController.text.toString()}',
           'total': '${sum}',
           'product': '${jsonString}',
-          'legder_balance': '${legder_balance}',
+          'legder_balance': '$selected_dealer_account',
+          'user_id': '$id',
+
         });
         http.StreamedResponse response = await request.send();
         if (response.statusCode == 200) {
@@ -124,14 +132,15 @@ class _CreateOrderState extends State<Create_Order> {
     }
     else{
       request.fields.addAll({
-        'dealer_id': '${id}',
+        'dealer_id': '$selected_dealer_Id',
         'row_id': '',
         'depot': '${_mySelection}',
         'type': '${_site}',
         'tl_no': '${tlController.text.toString()}',
         'total': '${sum}',
         'product': '${jsonString}',
-        'legder_balance': '4000',
+        'legder_balance': '$selected_dealer_account',
+        'user_id': '$id'
       });
       http.StreamedResponse response = await request.send();
       if (response.statusCode == 200) {
@@ -161,6 +170,7 @@ class _CreateOrderState extends State<Create_Order> {
     super.initState();
     this.getDepot();
     data1 = fetchData();
+    Outlets_list();
     Containers_sizes();
   }
 
@@ -173,8 +183,7 @@ class _CreateOrderState extends State<Create_Order> {
     if (response.statusCode == 200) {
       print("Hello world");
       List<dynamic> data = json.decode(response.body);
-      List<String> sizeList =
-      data.map((item) => item['sizes'].toString()).toList();
+      List<String> sizeList = data.map((item) => item['sizes'].toString()).toList();
       List<String> idList = data.map((item) => item['id'].toString()).toList();
       setState(() {
         size_type_list = sizeList;
@@ -183,6 +192,25 @@ class _CreateOrderState extends State<Create_Order> {
       });
     } else {
       print("object-error");
+      throw Exception('Failed to fetch data from the API');
+    }
+  }
+  Future<void> Outlets_list() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var id = prefs.getString("Id");
+    var pre = prefs.getString("privilege");
+    final response = await http.get(Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/outlet_count.php?key=03201232927&id=$id&pre=$pre'));
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
+      List<String> sizeList = data.map((item) => item['name'].toString()).toList();
+      List<String> idList = data.map((item) => item['id'].toString()).toList();
+      List<String> accountList = data.map((item) => item['acount'].toString()).toList();
+      setState(() {
+        dealer_name_list = sizeList;
+        dealer_id_list = idList;
+        dealer_account_list=accountList;
+      });
+    } else {
       throw Exception('Failed to fetch data from the API');
     }
   }
@@ -216,6 +244,7 @@ class _CreateOrderState extends State<Create_Order> {
       return null;
     }
   }
+
 
   int _selectedIndex = 1;
 
@@ -263,6 +292,48 @@ class _CreateOrderState extends State<Create_Order> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          TextDropdownFormField(
+                            options: dealer_name_list,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18.0),
+                              ),
+                              suffixIcon: Icon(
+                                  Icons.arrow_drop_down_circle_outlined),
+                              labelText: "Outlet",
+                              hintText: "Please Select Outlet",
+                            ),
+                            dropdownHeight: 100,
+                            onChanged: (dynamic value) {
+                              if (value.isNotEmpty) {
+                                setState(() {
+                                  selected_dealer_name=value;
+                                  int index = dealer_name_list.indexOf(value);
+                                  if (index >= 0 && index < dealer_id_list.length) {
+                                    selected_dealer_Id = dealer_id_list[index]; // Set the corresponding ID
+                                  }
+                                  index = dealer_name_list.indexOf(value);
+                                  if (index >= 0 && index < dealer_account_list.length) {
+                                    selected_dealer_account = dealer_account_list[index]; // Set the corresponding ID
+                                  }
+                                  print("dealer have following data $selected_dealer_Id,$selected_dealer_account Thank you");
+
+
+                                });
+                              } else {
+                                print("Enter value");
+                              };
+                            },
+                            onSaved: (dynamic value) {
+                              if (value.isNotempty) {
+                                setState(() {
+                                });
+                              } else {
+                                print("Enter value");
+                              }
+                              ;
+                            },
+                          ),
                           //CircleAvatar
                           const SizedBox(
                             height: 10,
@@ -297,7 +368,7 @@ class _CreateOrderState extends State<Create_Order> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'PKR. ${account}',
+                                    'PKR. $selected_dealer_account',
                                     style: GoogleFonts.poppins(
                                       fontSize: 14,
                                       color: Color(0xff000000),

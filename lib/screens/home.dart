@@ -920,7 +920,7 @@ class _HomeScreenState extends State<Home> {
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
-                                                        builder: (context) => Inspection(dealer_id: dealer_id,)),
+                                                        builder: (context) => Inspection(dealer_id: dealer_id,inspectionid: id)),
                                                   );
                                                 },
                                               ),

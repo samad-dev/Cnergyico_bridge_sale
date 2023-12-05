@@ -33,26 +33,22 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    checkLoginStatus();
     // getValue();
   }
   Future<void> checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-
     // Navigate to the appropriate screen based on the login status
     if (isLoggedIn) {
       Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => Home(),
-        ),
-      );
+        context, MaterialPageRoute(builder: (BuildContext context) => Home(),),);
     }
   }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Constants.primary_color,
+      backgroundColor: Constants.secondary_color,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -83,11 +79,11 @@ class _SplashScreenState extends State<SplashScreen> {
               children: [
                 Container(
                   child: Text(
-                    'Welcome To Flow',
+                    'Welcome To Puma',
                     style: GoogleFonts.poppins(
                       textStyle: Theme.of(context).textTheme.displayLarge,
                       fontSize: 28,
-                      color: Constants.secondary_color,
+                      color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontStyle: FontStyle.normal,
                     ),
@@ -99,7 +95,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     style: GoogleFonts.poppins(
                       textStyle: Theme.of(context).textTheme.displayLarge,
                       fontSize: 28,
-                      color: Constants.secondary_color,
+                      color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontStyle: FontStyle.normal,
                     ),
@@ -129,11 +125,12 @@ class _SplashScreenState extends State<SplashScreen> {
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w700,
                           fontStyle: FontStyle.normal,
+                          color: Constants.secondary_color,
                         ),
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      primary: Constants.secondary_color,
+                      primary: Colors.white
                     ),
                     onPressed: () {
                       Navigator.pushReplacement<void, void>(
@@ -154,7 +151,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     child: Text(
                       'Register',
                       style: GoogleFonts.poppins(
-                        color: Constants.secondary_color,
+                        color: Colors.white,
                         fontWeight: FontWeight.w700,
                         fontStyle: FontStyle.normal,
                       ),

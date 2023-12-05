@@ -110,7 +110,7 @@ class _LoginState extends State<Login> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      'assets/images/website-logo.png',
+                      'assets/images/puma icon.png',
                       width: 100,
                     ),
                     Container(
