@@ -66,16 +66,15 @@ class _ProfileState extends State<Profile> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         CircleAvatar(
-                            backgroundColor: Color(0xffB3DCF1),
+                            backgroundColor: Colors.white,
                             radius: 60,
-                            child: Icon(
-                              Icons.h_mobiledata,
-                              color: Colors.white,
-                              size: 90,
-                            ) //Text
+                            child:Image.asset(
+                              'assets/images/puma icon.png',
+                              width: 75,
+                            ),
                         ),
                         Text(
-                          'Hascol Dealer',
+                          'Puma Inspector',
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             color: Color(0xff000000),

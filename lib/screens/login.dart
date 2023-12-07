@@ -99,27 +99,33 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xffffffff),
+      backgroundColor: Color(0xff000000),
       body: SingleChildScrollView(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.only(top: 120),
+            padding: const EdgeInsets.only(top: 150),
             child: Column(
               children: [
+                Container(
+                  alignment: Alignment.topLeft,
+                  padding: EdgeInsets.only(left: 8.0),
+                  child: SvgPicture.asset('assets/images/puma_logo2.svg'), // Replace with your image asset
+                ),
+                SizedBox(height: 60,),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset(
-                      'assets/images/puma icon.png',
-                      width: 100,
-                    ),
+                    /*
                     Container(
                       child: Text(
                         'Login Here',
                         style: GoogleFonts.poppins(
-                          textStyle: Theme.of(context).textTheme.displayLarge,
+                          textStyle: Theme
+                              .of(context)
+                              .textTheme
+                              .displayLarge,
                           fontSize: 22,
-                          color: Constants.primary_color,
+                          color: Color(0xff1F41BB),
                           fontWeight: FontWeight.w700,
                           fontStyle: FontStyle.normal,
                         ),
@@ -132,7 +138,10 @@ class _LoginState extends State<Login> {
                       child: Text(
                         'Welcome Back You`ve',
                         style: GoogleFonts.poppins(
-                          textStyle: Theme.of(context).textTheme.displayLarge,
+                          textStyle: Theme
+                              .of(context)
+                              .textTheme
+                              .displayLarge,
                           fontSize: 14,
                           color: Color(0xff000000),
                           fontWeight: FontWeight.w700,
@@ -144,7 +153,10 @@ class _LoginState extends State<Login> {
                       child: Text(
                         'been missed!',
                         style: GoogleFonts.poppins(
-                          textStyle: Theme.of(context).textTheme.displayLarge,
+                          textStyle: Theme
+                              .of(context)
+                              .textTheme
+                              .displayLarge,
                           fontSize: 14,
                           color: Color(0xff000000),
                           fontWeight: FontWeight.w700,
@@ -155,42 +167,41 @@ class _LoginState extends State<Login> {
                     SizedBox(
                       height: 30,
                     ),
+
+                     */
                     Container(
                       padding: EdgeInsets.only(left: 38, right: 38),
                       child: TextField(
                         controller: _emailController,
-                        style: GoogleFonts.poppins(
-                          color: Color(0xffa8a8a8),
+                        style: GoogleFonts.raleway(
+                          color: Color(0xffffffff),
                           fontWeight: FontWeight.w300,
                           fontSize: 16,
                           fontStyle: FontStyle.normal,
                         ),
+                        keyboardType: TextInputType.emailAddress, // Set the input type to phone.
                         decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Color(0xffF1F4FF),
-                          hintText: 'Enter Email',
-                          hintStyle: GoogleFonts.poppins(
+                          filled: false,
+                          hintText: 'Enter Email Address',
+                          hintStyle: GoogleFonts.raleway(
                             color: Color(0xffa8a8a8),
                             fontWeight: FontWeight.w300,
                             fontSize: 16,
                             fontStyle: FontStyle.normal,
                           ),
-                          labelStyle: GoogleFonts.poppins(
-                            color: Color(0xffa8a8a8),
+                          labelStyle: GoogleFonts.raleway(
+                            color: Color(0xffffffff),
                             fontWeight: FontWeight.w300,
                             fontSize: 16,
                             fontStyle: FontStyle.normal,
                           ),
-                          focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(width: 2, color: Constants.primary_color),
-                              borderRadius:
-                              BorderRadius.all(Radius.circular(10))),
-
-                          border: OutlineInputBorder(
-                              borderSide: BorderSide(width: 2, color: Color(0xffF1F4FF)),
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10))),
-                          labelText: 'Email',
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(width: 2, color: Colors.green.shade700),
+                          ),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(width: 2, color: Colors.grey),
+                          ),
+                          labelText: 'Email Address',
                         ),
                       ),
                     ),
@@ -201,56 +212,62 @@ class _LoginState extends State<Login> {
                       padding: EdgeInsets.only(left: 38, right: 38),
                       child: TextField(
                         controller: _passwordController,
-                        style: GoogleFonts.poppins(
-                          color: Color(0xffa8a8a8),
+                        style: GoogleFonts.raleway(
+                          color: Color(0xffffffff),
                           fontWeight: FontWeight.w300,
                           fontSize: 16,
                           fontStyle: FontStyle.normal,
                         ),
                         obscureText: true,
                         decoration: InputDecoration(
-                          hintStyle: GoogleFonts.poppins(
-                            color: Color(0xffa8a8a8),
-                            fontWeight: FontWeight.w300,
-                            fontSize: 16,
-                            fontStyle: FontStyle.normal,
-                          ),
-                          labelStyle: GoogleFonts.poppins(
-                            color: Color(0xffa8a8a8),
-                            fontWeight: FontWeight.w300,
-                            fontSize: 16,
-                            fontStyle: FontStyle.normal,
-                          ),
-                          filled: true,
-                          fillColor: Color(0xffF1F4FF),
                           hintText: 'Enter Password',
-                          focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(width: 2, color: Color(
-                                  0xff3b5fe0)),
-                              borderRadius:
-                              BorderRadius.all(Radius.circular(10))),
-                          border: OutlineInputBorder(
-                              borderSide: BorderSide(width: 2, color: Color(0xffF1F4FF)),
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10))),
+                          hintStyle:GoogleFonts.raleway(
+                            color: Color(0xff9d9d9d),
+                            fontSize: 16,
+                          ),
+                          filled: false,
                           labelText: 'Password',
+                          labelStyle: GoogleFonts.raleway(
+                            color: Color(0xffffffff),
+                            fontSize: 16,
+                          ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 15), // Adjust padding as needed
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(width:2,color: Colors.grey),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(width:2,color: Colors.green.shade700), // Color of the border
+                          ),
                         ),
                       ),
                     ),
+
+
+
                     SizedBox(
-                      height: 10,
+                      height: 20,
                     ),
                     Container(
                       alignment: Alignment.centerLeft,
                       padding: EdgeInsets.only(left: 40),
-                      child: Text(
-                        'Forget Password?',
-                        style: GoogleFonts.poppins(
-                          textStyle: Theme.of(context).textTheme.displayLarge,
-                          fontSize: 14,
-                          color: Constants.primary_color,
-                          fontWeight: FontWeight.w600,
-                          fontStyle: FontStyle.normal,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.white, // Color of the underline
+                              width: 1.0, // Width of the underline
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          'Forget Password?',
+                          style: GoogleFonts.poppins(
+                            textStyle: Theme.of(context).textTheme.displayLarge,
+                            fontSize: 14,
+                            color: Color(0xFFFFFFFF),
+                            fontWeight: FontWeight.w600,
+                            fontStyle: FontStyle.normal,
+                          ),
                         ),
                       ),
                     ),
@@ -258,30 +275,60 @@ class _LoginState extends State<Login> {
                       height: 20,
                     ),
                     Container(
-                      child: ElevatedButton(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            'Login',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w700,
-                              fontStyle: FontStyle.normal,
+                      padding: EdgeInsets.only(left: 38, right: 38),
+                      child:Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              child: Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: Text(
+                                  'Login',
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w700,
+                                    fontStyle: FontStyle.normal,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xffe81329),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
+                              ),
+                              onPressed: () {
+                                login(context);
+                                //Navigator.pushReplacement<void, void>(context,MaterialPageRoute<void>(builder: (BuildContext context) => Home(),),);
+                              },
                             ),
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          primary: Constants.primary_color,
-
-                        ),
-                        onPressed: () {
-                          login(context);
-                        },
+                        ],
                       ),
                     ),
                   ],
                 ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height / 5,
+                SizedBox(height:30),
+                Container(
+                  alignment: Alignment.center,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.white, // Color of the underline
+                          width: 1.0, // Width of the underline
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      'New to Puma Dealership? Register here ',
+                      style: GoogleFonts.poppins(
+                        textStyle: Theme.of(context).textTheme.displayLarge,
+                        fontSize: 14,
+                        color: Color(0xFFFFFFFF),
+                        fontWeight: FontWeight.w600,
+                        fontStyle: FontStyle.normal,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

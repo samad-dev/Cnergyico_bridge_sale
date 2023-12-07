@@ -72,7 +72,7 @@ class _StockReconcileTankPageState extends State<StockReconcileTankPage> {
         data.map((item) => Map<String, dynamic>.from(item)).toList();
         setState(() {
           filteredData1 = List<Map<String, dynamic>>.from(data);
-          number_of_nozzel= filteredData[filteredData1.length - 1]["no_of_nozel"];
+          number_of_nozzel= "${filteredData1.length}";
         });
         return resultList;
       } else {

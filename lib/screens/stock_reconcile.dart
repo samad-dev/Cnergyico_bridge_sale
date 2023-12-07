@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hascol_inspection/screens/Task_Dashboard.dart';
 import 'package:hascol_inspection/screens/stock_reconcile_Tank.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -106,7 +107,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
 
       if (response.statusCode == 200) {
         // Handle success, if needed
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => Outlets()), // Replace OutletsPage with the actual page you want to navigate to
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => TaskDashboard()), // Replace OutletsPage with the actual page you want to navigate to
         );
         print('Data sent successfully');
         Fluttertoast.showToast(

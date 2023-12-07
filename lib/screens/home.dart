@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:dropdown_plus/dropdown_plus.dart';
+import 'package:hascol_inspection/screens/Task_Dashboard.dart';
 import 'package:intl/intl.dart';
+import 'package:location/location.dart';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
@@ -14,6 +16,7 @@ import 'package:hascol_inspection/screens/login.dart';
 import 'package:hascol_inspection/screens/order_list.dart';
 import 'package:hascol_inspection/screens/profile.dart';
 import 'package:hascol_inspection/screens/task_list.dart';
+import 'package:map_launcher/map_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
@@ -47,6 +50,12 @@ class _HomeScreenState extends State<Home> {
   String? selectedtmformId;
   String? selectedtmformType;
   String? user_privilege;
+  LocationData? _currentLocation;
+  late String result;
+  var dealerlat;
+  var dealerlng;
+  var inspectorlat;
+  var inspectorlng;
 
   @override
   void initState() {
@@ -55,9 +64,42 @@ class _HomeScreenState extends State<Home> {
     Total_orders();
     Inspection_task();
     TransfersZM();
+    _getLocation();
   }
 
+  Future<void> _getLocation() async {
+    try {
+      Location location = Location();
 
+      bool _serviceEnabled;
+      PermissionStatus _permissionGranted;
+
+      _serviceEnabled = await location.serviceEnabled();
+      if (!_serviceEnabled) {
+        _serviceEnabled = await location.requestService();
+        if (!_serviceEnabled) {
+          return;
+        }
+      }
+
+      _permissionGranted = await location.hasPermission();
+      if (_permissionGranted == PermissionStatus.denied) {
+        _permissionGranted = await location.requestPermission();
+        if (_permissionGranted != PermissionStatus.granted) {
+          return;
+        }
+      }
+
+      LocationData locationData = await location.getLocation();
+      setState(() {
+        _currentLocation = locationData;
+        inspectorlat= _currentLocation?.latitude.toString();
+        inspectorlng = _currentLocation?.longitude.toString();
+      });
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
   Future<void> Total_outlet() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
@@ -94,6 +136,7 @@ class _HomeScreenState extends State<Home> {
   Future<void> Inspection_task() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
+    print(id);
     var pre = prefs.getString("privilege");
     final response = await http.get(
         Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/inspector_task.php?key=03201232927&id=$id&pre=$pre'));
@@ -230,6 +273,57 @@ class _HomeScreenState extends State<Home> {
       reasontransferController.clear();
       selectedtmformId = null;
     });
+  }
+  Future<void> ISIN(String d_lat,String d_lng,String i_lat,String i_lng,dealer_name,dealer_id,id) async {
+    final String apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/inspector_checkin.php?key=03201232927&i_lat=$i_lat&i_lng=$i_lng&d_lat=$d_lat&d_lng=$d_lng';
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response
+        // Map<String, dynamic> data = json.decode(response.body);
+
+        result = response.body;
+        print("result $result");
+        if(result == "IN")
+
+          {
+            /*Navigator.push(context,
+              MaterialPageRoute(builder: (context) => Inspection(dealer_id: dealer_id,inspectionid: id)),);*/
+            Navigator.push(context,
+              MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: id,dealer_name: dealer_name)),);
+          }
+
+        else
+        {
+          Fluttertoast.showToast(msg: 'You have not reached your destination',
+              toastLength: Toast.LENGTH_LONG,backgroundColor: Colors.redAccent);
+        }
+          // showDialog(
+          //   context: context,
+          //   builder: (BuildContext context) {
+          //     return AlertDialog(
+          //       title: Text('Location Not Reached'),
+          //       content: Text('Please reach the location and try again.'),
+          //       actions: <Widget>[
+          //         TextButton(
+          //           onPressed: () {
+          //             Navigator.of(context).pop();
+          //           },
+          //           child: Text('OK'),
+          //         ),
+          //       ],
+          //     );
+          //   },
+          // );
+      } else {
+        // Handle error
+        print('Error1: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle exceptions
+      print('Error: $error');
+    }
   }
 
 
@@ -583,6 +677,10 @@ class _HomeScreenState extends State<Home> {
                             final dealer_id = inspection_task[index2]['dealer_id'];
                             final time = inspection_task[index2]['time'];
                             final id = inspection_task[index2]['id'];
+                            final co_ordinates = inspection_task[index2]['co_ordinates'];
+                            var dealerlatlng = co_ordinates.split(',');
+                            dealerlat= dealerlatlng[0];
+                            dealerlng = dealerlatlng[1];
                             return Card(
                               elevation: 10,
                               color: Color(0xffffffff),
@@ -600,7 +698,7 @@ class _HomeScreenState extends State<Home> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Inspection at $dealer_name - Jauhar',
+                                            'Inspection at $dealer_name',
                                             style: GoogleFonts.poppins(
                                                 fontWeight: FontWeight.w600,
                                                 fontStyle: FontStyle.normal,
@@ -700,13 +798,34 @@ class _HomeScreenState extends State<Home> {
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            '$type',
-                                            style: GoogleFonts.montserrat(
-                                                fontWeight: FontWeight.w200,
+                                          TextButton(
+                                            child: Text(
+                                              'Naviagate',
+                                              style: GoogleFonts.montserrat(
+                                                fontWeight: FontWeight.bold,
                                                 fontStyle: FontStyle.normal,
-                                                color: Color(0xff737373),
-                                                fontSize: 12),
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            style: ButtonStyle(
+                                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                                RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(20.0), // Adjust the radius as needed
+                                                ),
+                                              ),
+                                              backgroundColor: MaterialStateProperty.all<Color>(Color(0xff12283d)), // Change to your desired light color
+                                            ),
+                                            onPressed: () async{
+                                              final availableMaps = await MapLauncher.installedMaps;
+                                              print(availableMaps); // [AvailableMap { mapName: Google Maps, mapType: google }, ...]
+
+                                              await availableMaps.first.showMarker(
+                                                coords: Coords(double.parse(dealerlat),double.parse(dealerlng)),
+                                                title: "$dealer_name",
+                                              );
+                                              print("Hello, world!");
+                                            },
                                           ),
                                           Text(
                                             'Details',
@@ -917,11 +1036,8 @@ class _HomeScreenState extends State<Home> {
 
                                                 ),
                                                 onPressed: () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) => Inspection(dealer_id: dealer_id,inspectionid: id)),
-                                                  );
+                                                  ISIN(dealerlat,dealerlng,inspectorlat,inspectorlng,dealer_name,dealer_id,id);
+
                                                 },
                                               ),
                                             ],
