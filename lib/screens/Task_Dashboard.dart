@@ -195,7 +195,7 @@ class TaskDashboardState extends State<TaskDashboard> {
                             children: [
                               Expanded(
                                 child: GestureDetector(
-                                  onTap: (){Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => SalesPerformance()));},
+                                  onTap: (){Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => SalesPerformance(dealer_id: dealer_id,)));},
                                   child: Card(
                                     elevation: 10.0,
                                     shape: RoundedRectangleBorder(
