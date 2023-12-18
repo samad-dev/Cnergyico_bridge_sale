@@ -24,20 +24,23 @@ class SalesPerformanceState extends State<SalesPerformance> {
   List<TextEditingController> readingControllers = [];
   bool isLoading = false;
   List<Map<String, dynamic>> filteredData = [];
+  List<String> variancesList = [];
+
+
   @override
   void initState() {
     super.initState();
     TargetSales(dealer_id);
   }
 
-  Future<void> sendReconciliationData(String id, String oldReading, String newReading, String product) async {
+  Future<void> sendSalesPerformance(String product_id, String monthly_target, String target_achived, String difference, String description) async {
     setState(() {
       isLoading = true; // Show loader
     });
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var user_id = prefs.getString("Id");
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/create/dealers_reconcilation.php';
+    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/create/dealers_target_return_response.php';
 
     try {
       final response = await http.post(
@@ -45,19 +48,18 @@ class SalesPerformanceState extends State<SalesPerformance> {
         body: {
           'user_id': '$user_id',
           'dealer_id': '$dealer_id',
-          'product_id': '',
+          'product_id': '$product_id',
           'row_id': '',
-          'monthly_target':'',
-          'target_achived':'',
-          'differnce':'',
-          'reason':'',
+          'monthly_target':'$monthly_target',
+          'target_achived':'$target_achived',
+          'differnce':'$difference',
+          'reason':'$description',
         },
       );
 
       if (response.statusCode == 200) {
         // Handle success, if needed
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => TaskDashboard()), // Replace OutletsPage with the actual page you want to navigate to
-        );
+        Navigator.pop(context, TaskDashboard());
         print('Data sent successfully');
         Fluttertoast.showToast(
           msg: 'Data sent successfully',
@@ -84,6 +86,25 @@ class SalesPerformanceState extends State<SalesPerformance> {
       });
     }
   }
+
+  void printReadingControllersValues() {
+    for (int index = 0; index < filteredData.length; index++) {
+      String description = readingControllers[index] != null
+          ? readingControllers[index].text
+          : ' ';
+      String Variances = "${int.parse(filteredData[index]["total_sum_target"]) - int.parse(filteredData[index]['target_amount'])}";
+
+
+      sendSalesPerformance(
+        filteredData[index]['product_id'],
+        filteredData[index]['target_amount'],
+        filteredData[index]["total_sum_target"],
+        Variances,
+        description,
+      );
+    }
+  }
+
   Future<List<Map<String, dynamic>>> TargetSales(String dealerId) async {
     final apiUrl =
         'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_dealer_monthly_target.php?key=03201232927&dealer_id=$dealerId';
@@ -110,18 +131,18 @@ class SalesPerformanceState extends State<SalesPerformance> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Constants.primary_color,
         title: Text(
           'Sales Performances',
           style: GoogleFonts.montserrat(
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.normal,
-            color: Color(0xff12283D),
+            color: Colors.white,
             fontSize: 16,
           ),
         ),
         iconTheme: IconThemeData(
-          color: Color(0xff12283d),
+          color: Colors.white,
         ),
       ),
       body: SingleChildScrollView(
@@ -211,7 +232,7 @@ class SalesPerformanceState extends State<SalesPerformance> {
                                 ),
                                 SizedBox(height: 5,),
                                 Text(
-                                  "Variances: ${int.parse(target_amount)-int.parse(total_sum_target)}",
+                                  "Variances: ${int.parse(total_sum_target) - int.parse(target_amount)}",
                                   style: GoogleFonts.poppins(
                                     fontWeight: FontWeight.w200,
                                     fontStyle: FontStyle.normal,
@@ -242,7 +263,7 @@ class SalesPerformanceState extends State<SalesPerformance> {
                 SizedBox(
                   height: 15
                 ),
-               
+
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     elevation: 4.0,
@@ -252,9 +273,14 @@ class SalesPerformanceState extends State<SalesPerformance> {
                     ),
                     minimumSize: Size(200, 50), // Set your preferred width and height
                   ),
-                  child: Text("Start"),
-                  onPressed: (){
+                  onPressed: isLoading
+                      ? null // Disable button while loading
+                      : () {
+                    printReadingControllersValues();
                   },
+                  child: isLoading
+                      ? CircularProgressIndicator() // Show loader
+                      : Text('Submit',style: TextStyle(color: Colors.white),),
                 ),
               ],
             ),

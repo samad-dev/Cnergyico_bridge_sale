@@ -188,18 +188,18 @@ class _StockReconcileTankPageState extends State<StockReconcileTankPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Constants.primary_color,
         title: Text(
-          'Stock Reconcile',
+          'Wet Stock Management',
           style: GoogleFonts.montserrat(
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.normal,
-            color: Color(0xff12283D),
+            color: Colors.white,
             fontSize: 16,
           ),
         ),
         iconTheme: IconThemeData(
-          color: Color(0xff12283d),
+          color: Colors.white,
         ),
       ),
       body: SingleChildScrollView(
@@ -474,7 +474,7 @@ class _StockReconcileTankPageState extends State<StockReconcileTankPage> {
                   },
                   child: isLoading
                       ? CircularProgressIndicator() // Show loader
-                      : Text('Submit'),
+                      : Text('Submit',style: TextStyle(color: Colors.white),),
                 ),
               ],
             ),

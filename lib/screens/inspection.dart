@@ -13,6 +13,7 @@ import 'package:signature/signature.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 
+import '../utils/constants.dart';
 import 'home.dart';
 
 class CaseData {
@@ -266,20 +267,30 @@ class _InspectionState extends State<Inspection> {
       child: Container(
         child: Column(
           children: [
-            Card(
-              color: Color(0xff12283D),
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: MediaQuery.of(context).size.width / 3,
-                  vertical: 10,
-                ),
-                child: Text(
-                  caseData.title,
-                  style: TextStyle(
-                    color: Colors.white,
+            Row(
+              children: [
+                Expanded(
+                  child: Card(
+                    color: Color(0xff12283D),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 12,
+                          ),
+                          child: Text(
+                            caseData.title,
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -437,7 +448,11 @@ class _InspectionState extends State<Inspection> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Inspection Form'),
+        backgroundColor: Constants.primary_color,
+        title: Text('Inspection Form',style: TextStyle(color: Colors.white),),
+        iconTheme: IconThemeData(
+          color: Colors.white,
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -466,6 +481,7 @@ class _InspectionState extends State<Inspection> {
       ),
       floatingActionButton: activeStep == cases.length - 1
           ? FloatingActionButton(
+        backgroundColor: Constants.secondary_color,
         onPressed: () {
           List<Map<String, dynamic>> unansweredQuestions = [];
           if (validateResponses(unansweredQuestions)) {
@@ -583,7 +599,7 @@ class _InspectionState extends State<Inspection> {
           }
         },
 
-        child: Icon(Icons.send_rounded),
+        child: Icon(Icons.send_rounded,color: Colors.white,),
       )
           : null,
     );

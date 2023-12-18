@@ -7,8 +7,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hascol_inspection/screens/create_order.dart';
 import 'package:hascol_inspection/screens/home.dart';
 import 'package:hascol_inspection/screens/login.dart';
+import 'package:hascol_inspection/utils/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../main.dart';
 import 'order_list.dart';
@@ -21,10 +23,19 @@ class Profile extends StatefulWidget {
   _ProfileState createState() => _ProfileState();
 }
 
+
 class _ProfileState extends State<Profile> {
   @override
   void initState() {
     super.initState();
+  }
+
+  _launchURL(String url) async {
+    try {
+      await launchUrlString(url);
+    } catch (e) {
+      print("Error launching URL: $e");
+    }
   }
 
   int _selectedIndex = 2;
@@ -36,17 +47,17 @@ class _ProfileState extends State<Profile> {
     final _height = MediaQuery.of(context).size.height;
     return Builder(builder: (context) {
       return Scaffold(
-        backgroundColor: Color(0xffffffff),
+        backgroundColor: Colors.white,
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          backgroundColor: Colors.white,
+          backgroundColor: Constants.primary_color,
           elevation: 10,
           title: Text(
             'Profile',
             style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.w700,
                 fontStyle: FontStyle.normal,
-                color: Color(0xff12283D),
+                color: Colors.white,
                 fontSize: 16),
           ),
         ),
@@ -97,69 +108,56 @@ class _ProfileState extends State<Profile> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    FluentIcons.person_circle_20_regular,
-                                    size: 35,
-                                  ),
-                                  SizedBox(width: 5,),
-                                  Text(
-                                    'Help & Support',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: Color(0xff000000),
-                                      fontWeight: FontWeight.w600,
-                                      fontStyle: FontStyle.normal,
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: GestureDetector(
+                                onTap: (){_launchURL('https://www.pumapakistan.com/en/contact');},
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      FluentIcons.contact_card_20_regular,
+                                      size: 35,
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    FluentIcons.contact_card_20_regular,
-                                    size: 35,
-                                  ),
-                                  SizedBox(width: 5,),
-                                  Text(
-                                    'Contact us',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: Color(0xff000000),
-                                      fontWeight: FontWeight.w600,
-                                      fontStyle: FontStyle.normal,
+                                    SizedBox(width: 5,),
+                                    Text(
+                                      'Contact us',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: Color(0xff000000),
+                                        fontWeight: FontWeight.w600,
+                                        fontStyle: FontStyle.normal,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    FluentIcons.lock_multiple_20_regular,
-                                    size: 35,
-                                  ),
-                                  SizedBox(width: 5,),
-                                  Text(
-                                    'Privacy Policy',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: Color(0xff000000),
-                                      fontWeight: FontWeight.w600,
-                                      fontStyle: FontStyle.normal,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: GestureDetector(
+                                onTap: (){
+                                  _launchURL("https://www.pumapakistan.com/en/products-services/#polices");
+                                },
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      FluentIcons.lock_multiple_20_regular,
+                                      size: 35,
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(width: 5,),
+                                    Text(
+                                      'Privacy Policy',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: Color(0xff000000),
+                                        fontWeight: FontWeight.w600,
+                                        fontStyle: FontStyle.normal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                          ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                               child:GestureDetector(
@@ -223,7 +221,7 @@ class _ProfileState extends State<Profile> {
               showUnselectedLabels: true,
               showSelectedLabels: true,
               selectedIconTheme: IconThemeData(
-                color: Color(0xff12283D),
+                color: Constants.primary_color,
               ),
               type: BottomNavigationBarType.shifting,
               items: const <BottomNavigationBarItem>[
@@ -250,7 +248,7 @@ class _ProfileState extends State<Profile> {
                   backgroundColor: Colors.white,
                 ),
               ],
-              selectedItemColor: Color(0xff12283D),
+              selectedItemColor: Constants.primary_color,
               iconSize: 40,
               onTap: _onItemTapped,
               elevation: 15),

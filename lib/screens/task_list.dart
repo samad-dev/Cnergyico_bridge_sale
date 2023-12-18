@@ -14,8 +14,12 @@ import 'package:hascol_inspection/screens/login.dart';
 import 'package:hascol_inspection/screens/profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:map_launcher/map_launcher.dart';
+import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 
+import '../utils/constants.dart';
+import 'Task_Dashboard.dart';
 import 'inspection.dart';
 
 class Tasks extends StatefulWidget {
@@ -35,61 +39,66 @@ class _TasksState extends State<Tasks> {
   String? selectedtmformId;
   String? selectedtmformType;
   String? user_privilege;
+  var dealerlat;
+  var dealerlng;
+  var inspectorlat;
+  var inspectorlng;
+  LocationData? _currentLocation;
+  late String result;
+  String searchQuery = '';
+  List<Map<String, dynamic>> filteredData = [];
+  late String transfer_id;
+  List<String> list1 =[];
+  List<String> list2 =[];
+
   @override
   void initState() {
     super.initState();
     Inspection_task();
-    TransfersZM();
+    _getLocation();
   }
+
 
   Future<void> Inspection_task() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     var pre = prefs.getString("privilege");
+    user_privilege=pre;
     final response = await http.get(
         Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/inspector_task.php?key=03201232927&id=$id&pre=$pre'));
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       setState(() {
         inspection_task = List<Map<String, dynamic>>.from(data);
+        filteredData = List<Map<String, dynamic>>.from(data);
       });
     } else {
       throw Exception('Failed to fetch data from the API');
     }
   }
-  Future<void> TransfersZM() async {
+  Future<void> TransfersZM(String dealer_id) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     var pre = prefs.getString("privilege");
-    user_privilege = pre;
-    if(pre=="ZM" || pre == "zm"){
-      final response = await http.get(Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/individual_tm_of_zm.php?key=03201232927&zm_id=$id'));
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        List<String> typeList = data.map((item) => '${item['name']} - ${item['privilege']}').toList();
-        List<String> idList = data.map((item) => item['tm_id'].toString()).toList();
+    final response = await http.get(Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_spec_dealer.php?key=03201232927&dealer_id=$dealer_id'));
+
+    if (response.statusCode == 200) {
+      // Parse the response and get TM and ASM data
+      dynamic responseData = json.decode(response.body);
+
+      if (responseData is List && responseData.isNotEmpty) {
+        // If responseData is a List, access the first item (assuming only one item is expected)
+        Map<String, dynamic> dealerData = responseData[0];
         setState(() {
-          tm_list = typeList;
-          tm_id_list = idList;
+          list1 = user_privilege?.toLowerCase() == "tm" ? ["${dealerData["asm_name"]} - tm"] : ["${dealerData["tm_name"]} - rm", "${dealerData["asm_name"]} - tm"];
+          list2 = [dealerData["asm"],dealerData["tm"]];
         });
+
       } else {
-        throw Exception('Failed to fetch data from the API');
+        throw Exception('The API response is not a non-empty List');
       }
-    }
-    else if(pre =="TM"|| pre=="tm"){
-      final response = await http.get(
-          Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/individual_asm_of_tm.php?key=03201232927&tm_id=$id'));
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        List<String> typeList = data.map((item) => '${item['name']} - ${item['privilege']}').toList();
-        List<String> idList = data.map((item) => item['tm_id'].toString()).toList();
-        setState(() {
-          tm_list = typeList;
-          tm_id_list = idList;
-        });
-      } else {
-        throw Exception('Failed to fetch data from the API');
-      }
+    } else {
+      throw Exception('Failed to fetch data from the API');
     }
   }
   void sendRequestReschedule(var taskId,String oldDate)async {
@@ -135,7 +144,7 @@ class _TasksState extends State<Tasks> {
 
     });
   }
-  void sendRequestTransfer(var taskId)async {
+  void sendRequestTransfer(var taskId,var transferid)async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     final apiUrl = "http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/transfer_task.php";
@@ -143,7 +152,7 @@ class _TasksState extends State<Tasks> {
       "user_id": id,
       "task_id": taskId,
       "row_id": '',
-      "transfer_to":selectedtmformId,
+      "transfer_to":transferid,
       "reason": reasontransferController.text.toString(),
     };
     final response = await http.post(Uri.parse(apiUrl), body: data);
@@ -174,7 +183,100 @@ class _TasksState extends State<Tasks> {
     }
     setState(() {
       reasontransferController.clear();
-      selectedtmformId = null;
+    });
+  }
+  Future<void> _getLocation() async {
+    try {
+      Location location = Location();
+
+      bool _serviceEnabled;
+      PermissionStatus _permissionGranted;
+
+      _serviceEnabled = await location.serviceEnabled();
+      if (!_serviceEnabled) {
+        _serviceEnabled = await location.requestService();
+        if (!_serviceEnabled) {
+          return;
+        }
+      }
+
+      _permissionGranted = await location.hasPermission();
+      if (_permissionGranted == PermissionStatus.denied) {
+        _permissionGranted = await location.requestPermission();
+        if (_permissionGranted != PermissionStatus.granted) {
+          return;
+        }
+      }
+
+      LocationData locationData = await location.getLocation();
+      setState(() {
+        _currentLocation = locationData;
+        inspectorlat= _currentLocation?.latitude.toString();
+        inspectorlng = _currentLocation?.longitude.toString();
+      });
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+  Future<void> ISIN(String d_lat,String d_lng,String i_lat,String i_lng,dealer_name,dealer_id,id) async {
+    final String apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/inspector_checkin.php?key=03201232927&i_lat=$i_lat&i_lng=$i_lng&d_lat=$d_lat&d_lng=$d_lng';
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response
+        // Map<String, dynamic> data = json.decode(response.body);
+
+        result = response.body;
+        print("result $result");
+        if(result == "IN")
+
+        {
+          /*Navigator.push(context,
+              MaterialPageRoute(builder: (context) => Inspection(dealer_id: dealer_id,inspectionid: id)),);*/
+          Navigator.push(context,
+            MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: id,dealer_name: dealer_name)),);
+        }
+
+        else
+        {
+          Fluttertoast.showToast(msg: 'You have not reached your destination',
+              toastLength: Toast.LENGTH_LONG,backgroundColor: Colors.redAccent);
+        }
+        // showDialog(
+        //   context: context,
+        //   builder: (BuildContext context) {
+        //     return AlertDialog(
+        //       title: Text('Location Not Reached'),
+        //       content: Text('Please reach the location and try again.'),
+        //       actions: <Widget>[
+        //         TextButton(
+        //           onPressed: () {
+        //             Navigator.of(context).pop();
+        //           },
+        //           child: Text('OK'),
+        //         ),
+        //       ],
+        //     );
+        //   },
+        // );
+      } else {
+        // Handle error
+        print('Error1: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle exceptions
+      print('Error: $error');
+    }
+  }
+  void filterData(String query) {
+    setState(() {
+      searchQuery = query;
+      if (query.isNotEmpty) {
+        filteredData = inspection_task.where((order) => order['dealer_name'].toUpperCase().contains(query)).toList();
+      } else {
+        filteredData = inspection_task;
+      }
     });
   }
 
@@ -188,21 +290,21 @@ class _TasksState extends State<Tasks> {
         backgroundColor: Color(0xffffffff),
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          backgroundColor: Colors.white,
+          backgroundColor: Constants.primary_color,
           elevation: 10,
           title: Text(
             'Tasks',
             style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.w700,
                 fontStyle: FontStyle.normal,
-                color: Color(0xff12283D),
+                color: Colors.white,
                 fontSize: 16),
           ),
 
         ),
         body: SingleChildScrollView(
             child: Container(
-              padding: EdgeInsets.all(18),
+              padding: EdgeInsets.all(8),
               child: Column(
                 children: [
                   Card(
@@ -221,6 +323,9 @@ class _TasksState extends State<Tasks> {
                               color: Color(0xff12283D),
                               fontSize: 16),
                           border: InputBorder.none),
+                      onChanged: (value) {
+                        filterData(value.toUpperCase());
+                      },
                     ),
                   ),
                   SizedBox(
@@ -230,13 +335,20 @@ class _TasksState extends State<Tasks> {
                       physics: NeverScrollableScrollPhysics(),
                       scrollDirection: Axis.vertical,
                       shrinkWrap: true,
-                      itemCount: inspection_task.length,
+                      itemCount: filteredData.length,
                       itemBuilder: (BuildContext context, int index2) {
-                        final type = inspection_task[index2]['type'];
-                        final dealer_name = inspection_task[index2]['dealer_name'];
-                        final dealer_id = inspection_task[index2]['dealer_id'];
-                        final time = inspection_task[index2]['time'];
-                        final id = inspection_task[index2]['id'];
+                        if (searchQuery.isNotEmpty) {
+                            filteredData = inspection_task.where((order) => order['dealer_name'].toUpperCase().contains(searchQuery)).toList();
+                        } else {filteredData = inspection_task;}
+                        final type = filteredData[index2]['type'];
+                        final dealer_name = filteredData[index2]['dealer_name'];
+                        final dealer_id = filteredData[index2]['dealer_id'];
+                        final time = filteredData[index2]['time'];
+                        final id = filteredData[index2]['id'];
+                        final co_ordinates = filteredData[index2]['co_ordinates'];
+                        var dealerlatlng = co_ordinates.split(',');
+                        dealerlat= dealerlatlng[0];
+                        dealerlng = dealerlatlng[1];
                         return Card(
                           elevation: 10,
                           color: Color(0xffffffff),
@@ -253,19 +365,24 @@ class _TasksState extends State<Tasks> {
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        'Inspection at $dealer_name - Jauhar',
-                                        style: GoogleFonts.poppins(
-                                            fontWeight: FontWeight.w600,
-                                            fontStyle: FontStyle.normal,
-                                            color: Color(0xff12283D),
-                                            fontSize: 14),
+                                      Container(
+                                        child: Text(
+                                          'Inspection at $dealer_name',
+                                          style: GoogleFonts.poppins(
+                                              fontWeight: FontWeight.w600,
+                                              fontStyle: FontStyle.normal,
+                                              color: Color(0xff12283D),
+                                              fontSize: 14),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        width: MediaQuery.of(context).size.width/1.3,
                                       ),
                                       if(user_privilege == "ZM" || user_privilege == "zm" || user_privilege == "TM"||user_privilege == "tm")
                                         GestureDetector(
-                                          onTap: (){
+                                          onTap: () async {
                                             reasontransferController.clear();
-                                            selectedtmformId = null;
+                                            await TransfersZM(dealer_id);
                                             showDialog(
                                               context: context,
                                               builder: (BuildContext context) {
@@ -274,13 +391,14 @@ class _TasksState extends State<Tasks> {
                                                       return AlertDialog(
                                                         title: Text("Transfer"),
                                                         content: Container(
-                                                          height: MediaQuery.of(context).size.height/3.4,
-                                                          width: MediaQuery.of(context).size.width/1.5,
+                                                          height: MediaQuery.of(context).size.height/3,
+                                                          width: MediaQuery.of(context).size.width/1.2,
                                                           child: Column(
                                                             children: [
                                                               TextDropdownFormField(
-                                                                options:tm_list,
+                                                                options: list1,
                                                                 decoration: InputDecoration(
+                                                                  isDense: false,
                                                                   border: OutlineInputBorder(
                                                                     borderRadius: BorderRadius.circular(18.0),
                                                                   ),
@@ -290,17 +408,12 @@ class _TasksState extends State<Tasks> {
                                                                 dropdownHeight: 100,
                                                                 onChanged: (dynamic value) {
                                                                   setState(() {
-                                                                    selectedtmformType = value; // Set the selected type
-                                                                    // Find the index of the selected type in uniform_type_list
-                                                                    int index = tm_list.indexOf(value);
-                                                                    if (index >= 0 && index < tm_id_list.length) {
-                                                                      selectedtmformId = tm_id_list[index]; // Set the corresponding ID
-                                                                    }
+                                                                    transfer_id=value;
                                                                   });
                                                                 },
                                                               ),
                                                               Padding(
-                                                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                                                padding: const EdgeInsets.symmetric(vertical: 5),
                                                                 child: TextField(
                                                                   controller: reasontransferController,
                                                                   decoration: InputDecoration(
@@ -311,28 +424,58 @@ class _TasksState extends State<Tasks> {
                                                                     ),
                                                                   ),
                                                                   maxLines: 3,
-                                                                  minLines: 3,
+                                                                  minLines: 2,
                                                                 ),
                                                               ),
-                                                              Row(
-                                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                                children: [
-                                                                  ElevatedButton(
-                                                                    onPressed: (){
-                                                                      sendRequestTransfer(id);
-                                                                    },
-                                                                    child: Text("Start"),
+                                                            ],
+
+                                                          ),
+                                                        ),
+                                                        actions: [
+                                                          Row(
+                                                            mainAxisAlignment: MainAxisAlignment.end,
+                                                            children: [
+                                                              ElevatedButton(
+                                                                onPressed: (){
+                                                                  List<String> parts = transfer_id.split('-');
+                                                                  String secondPart = parts.length > 1 ? parts[1].trim() : '';
+                                                                  if(secondPart=='tm'){
+                                                                    print("hello world ${list2[0]}");
+                                                                    sendRequestTransfer(id,list2[0]);
+                                                                  }
+                                                                  else if(secondPart=='rm'){
+                                                                    print("hello world ${list2[1]}");
+                                                                    sendRequestTransfer(id,list2[1]);
+                                                                  }
+                                                                },
+                                                                style: ElevatedButton.styleFrom(
+                                                                    backgroundColor: Constants.primary_color
+                                                                ),
+                                                                child: Text(
+                                                                  "Start",
+                                                                  style: TextStyle(
+                                                                    color: Colors.white,
+                                                                    fontSize: 12,
                                                                   ),
-                                                                  SizedBox(width: 10,),
-                                                                  ElevatedButton(
-                                                                    onPressed: () => Navigator.of(context).pop(),
-                                                                    child: Text("Cancel"),
+                                                                ),
+                                                              ),
+                                                              SizedBox(width: 10,),
+                                                              ElevatedButton(
+                                                                onPressed: () => Navigator.of(context).pop(),
+                                                                style: ElevatedButton.styleFrom(
+                                                                    backgroundColor: Constants.primary_color
+                                                                ),
+                                                                child: Text(
+                                                                  "Cancel",
+                                                                  style: TextStyle(
+                                                                    color: Colors.white,
+                                                                    fontSize: 12,
                                                                   ),
-                                                                ],
+                                                                ),
                                                               ),
                                                             ],
                                                           ),
-                                                        ),
+                                                        ],
                                                       );
                                                     }
                                                 );
@@ -340,7 +483,7 @@ class _TasksState extends State<Tasks> {
                                             );
                                           },
                                           child: CircleAvatar(
-                                              backgroundColor: Color(0xff12283D),
+                                              backgroundColor: Constants.secondary_color,
                                               child: Image.asset(
                                                 "assets/images/change.png",
                                                 width: 35,
@@ -354,13 +497,37 @@ class _TasksState extends State<Tasks> {
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        '$type',
-                                        style: GoogleFonts.montserrat(
-                                            fontWeight: FontWeight.w200,
+                                      TextButton(
+                                        child: Text(
+                                          'Naviagate',
+                                          style: GoogleFonts.montserrat(
+                                            fontWeight: FontWeight.bold,
                                             fontStyle: FontStyle.normal,
-                                            color: Color(0xff737373),
-                                            fontSize: 12),
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        style: ButtonStyle(
+                                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                            RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(20.0), // Adjust the radius as needed
+                                            ),
+                                          ),
+                                          backgroundColor: MaterialStateProperty.all<Color>(Constants.secondary_color,), // Change to your desired light color
+                                        ),
+                                        onPressed: () async{
+                                          var dealerlatlng = co_ordinates.split(',');
+                                          dealerlat= dealerlatlng[0];
+                                          dealerlng = dealerlatlng[1];
+                                          final availableMaps = await MapLauncher.installedMaps;
+                                          print(availableMaps); // [AvailableMap { mapName: Google Maps, mapType: google }, ...]
+
+                                          await availableMaps.first.showMarker(
+                                            coords: Coords(double.parse(dealerlat),double.parse(dealerlng)),
+                                            title: "$dealer_name",
+                                          );
+                                          print("Hello, world!");
+                                        },
                                       ),
                                       Text(
                                         'Details',
@@ -388,21 +555,21 @@ class _TasksState extends State<Tasks> {
                                           Icon(
                                             FluentIcons.clock_48_regular,
                                             size: 15,
-                                            color: Color(0xff12283d),
+                                            color: Constants.secondary_color,
                                           ),
                                           SizedBox(
                                             width: 5,
                                           ),
                                           Container(
-                                            width:MediaQuery.of(context).size.width/3.5,
+                                            width:MediaQuery.of(context).size.width/4,
                                             child: Text(
                                               '$time',
                                               style: GoogleFonts.montserrat(
                                                   fontWeight: FontWeight.w200,
                                                   fontStyle: FontStyle.normal,
                                                   color: Color(0xff737373),
-                                                  fontSize: 12),
-                                              maxLines: 1,
+                                                  fontSize: 11),
+                                              maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
@@ -414,16 +581,19 @@ class _TasksState extends State<Tasks> {
                                             child: Text(
                                               'Reschedule',
                                               style: GoogleFonts.poppins(
+                                                fontSize: 12,
                                                 fontWeight: FontWeight.w500,
                                                 fontStyle: FontStyle.normal,
+                                                color: Colors.white,
                                               ),
                                             ),
                                             style: ElevatedButton.styleFrom(
-                                              primary: Color(0xff12283D),
+                                              backgroundColor: Constants.secondary_color,
+
                                               shape: RoundedRectangleBorder(
                                                 borderRadius: BorderRadius.circular(30.0),
                                               ),
-
+                                              fixedSize: const Size(120, 30),
                                             ),
                                             onPressed: () {
                                               selectedDate = null;
@@ -497,14 +667,21 @@ class _TasksState extends State<Tasks> {
                                                                             }
                                                                           },
                                                                           style: ElevatedButton.styleFrom(
-                                                                            shape: RoundedRectangleBorder(
-                                                                              borderRadius: BorderRadius.only(
-                                                                                topRight: Radius.circular(20.0),
-                                                                                bottomRight: Radius.circular(20.0),
+                                                                              shape: RoundedRectangleBorder(
+                                                                                borderRadius: BorderRadius.only(
+                                                                                  topRight: Radius.circular(20.0),
+                                                                                  bottomRight: Radius.circular(20.0),
+                                                                                ),
                                                                               ),
+                                                                              backgroundColor: Constants.primary_color
+                                                                          ),
+                                                                          child: Text(
+                                                                            "Select Date",
+                                                                            style: TextStyle(
+                                                                              color: Colors.white,
+                                                                              fontSize: 12,
                                                                             ),
                                                                           ),
-                                                                          child: Text("Select Date"),
                                                                         ),
                                                                       )
                                                                     ],
@@ -526,25 +703,67 @@ class _TasksState extends State<Tasks> {
                                                                     minLines: 3,
                                                                   ),
                                                                 ),
-                                                                Row(
-                                                                  mainAxisAlignment: MainAxisAlignment.end,
-                                                                  children: [
-                                                                    ElevatedButton(
-                                                                      onPressed: (){
-                                                                        sendRequestReschedule(id,time.toString());
-                                                                      },
-                                                                      child: Text("Start"),
-                                                                    ),
-                                                                    SizedBox(width: 10,),
-                                                                    ElevatedButton(
-                                                                      onPressed: () => Navigator.of(context).pop(),
-                                                                      child: Text("Cancel"),
-                                                                    ),
-                                                                  ],
-                                                                ),
                                                               ],
                                                             ),
                                                           ),
+                                                          actions: [
+                                                            Row(
+                                                              mainAxisAlignment: MainAxisAlignment.end,
+                                                              children: [
+                                                                ElevatedButton(
+                                                                  onPressed: () {
+                                                                    // Check if both date and reason are not null
+                                                                    if (selectedDate != null && reasonController.text.isNotEmpty) {
+                                                                      sendRequestReschedule(id, selectedDate.toString());
+                                                                    } else {
+                                                                      // Show a dialog or a message indicating that date and reason are required
+                                                                      showDialog(
+                                                                        context: context,
+                                                                        builder: (BuildContext context) {
+                                                                          return AlertDialog(
+                                                                            title: Text("Validation Error"),
+                                                                            content: Text("Please select a date and provide a reason."),
+                                                                            actions: [
+                                                                              TextButton(
+                                                                                onPressed: () {
+                                                                                  Navigator.of(context).pop();
+                                                                                },
+                                                                                child: Text("OK"),
+                                                                              ),
+                                                                            ],
+                                                                          );
+                                                                        },
+                                                                      );
+                                                                    }
+                                                                  },
+                                                                  style: ElevatedButton.styleFrom(
+                                                                      backgroundColor: Constants.primary_color
+                                                                  ),
+                                                                  child: Text(
+                                                                    "Start",
+                                                                    style: TextStyle(
+                                                                      color: Colors.white,
+                                                                      fontSize: 12,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                SizedBox(width: 10,),
+                                                                ElevatedButton(
+                                                                  onPressed: () => Navigator.of(context).pop(),
+                                                                  style: ElevatedButton.styleFrom(
+                                                                      backgroundColor: Constants.primary_color
+                                                                  ),
+                                                                  child: Text(
+                                                                    "Cancel",
+                                                                    style: TextStyle(
+                                                                      color: Colors.white,
+                                                                      fontSize: 12,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
                                                         );
                                                       }
                                                   );
@@ -553,29 +772,31 @@ class _TasksState extends State<Tasks> {
                                             },
                                           ),
                                           SizedBox(
-                                            width: 10,
+                                            width: 5,
                                           ),
                                           ElevatedButton(
                                             child: Text(
                                               'Start',
                                               style: GoogleFonts.poppins(
-                                                fontWeight: FontWeight.w500,
-                                                fontStyle: FontStyle.normal,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                  fontStyle: FontStyle.normal,
+                                                  color: Colors.white
                                               ),
                                             ),
                                             style: ElevatedButton.styleFrom(
-                                              primary: Color(0xff12283D),
+                                              backgroundColor: Constants.secondary_color,
                                               shape: RoundedRectangleBorder(
                                                 borderRadius: BorderRadius.circular(30.0),
                                               ),
-
+                                              fixedSize: Size(85, 40),
                                             ),
                                             onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) => Inspection(dealer_id: dealer_id,inspectionid: id)),
-                                              );
+                                              var dealerlatlng = co_ordinates.split(',');
+                                              dealerlat= dealerlatlng[0];
+                                              dealerlng = dealerlatlng[1];
+                                              ISIN(dealerlat,dealerlng,inspectorlat,inspectorlng,dealer_name,dealer_id,id);
+
                                             },
                                           ),
                                         ],
@@ -610,7 +831,7 @@ class _TasksState extends State<Tasks> {
               showUnselectedLabels: true,
               showSelectedLabels: true,
               selectedIconTheme: IconThemeData(
-                color: Color(0xff12283D),
+                color: Constants.primary_color,
               ),
               type: BottomNavigationBarType.shifting,
               items: const <BottomNavigationBarItem>[
@@ -637,7 +858,7 @@ class _TasksState extends State<Tasks> {
                   backgroundColor: Colors.white,
                 ),
               ],
-              selectedItemColor: Color(0xff12283D),
+              selectedItemColor: Constants.primary_color,
               iconSize: 40,
               onTap: _onItemTapped,
               elevation: 15),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hascol_inspection/utils/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
@@ -169,7 +170,7 @@ class _CreateOrderState extends State<Create_Order> {
   void initState() {
     super.initState();
     this.getDepot();
-    data1 = fetchData();
+    data1 = fetchData('0');
     Outlets_list();
     Containers_sizes();
   }
@@ -214,13 +215,13 @@ class _CreateOrderState extends State<Create_Order> {
       throw Exception('Failed to fetch data from the API');
     }
   }
-  Future<List<Map<String, dynamic>>?> fetchData() async {
+  Future<List<Map<String, dynamic>>?> fetchData(String Dealer_id) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     account = prefs.getString("account");
 
     final url = Uri.parse(
-        "http://151.106.17.246:8080/OMCS-CMS-APIS/get/dealers_products.php?key=03201232927&dealer_id=46");
+        "http://151.106.17.246:8080/OMCS-CMS-APIS/get/dealers_products.php?key=03201232927&dealer_id=$Dealer_id");
 
     try {
       final response = await http.get(url);
@@ -264,16 +265,16 @@ class _CreateOrderState extends State<Create_Order> {
           //replace with our own icon data.
         ),
         iconTheme: IconThemeData(
-          color: Colors.black, //change your color here
+          color: Colors.white, //change your color here
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Constants.primary_color,
         elevation: 10,
         title: Text(
           'Create Order',
           style: GoogleFonts.montserrat(
               fontWeight: FontWeight.w700,
               fontStyle: FontStyle.normal,
-              color: Color(0xff12283D),
+              color: Colors.white,
               fontSize: 16),
         ),
       ),
@@ -301,7 +302,6 @@ class _CreateOrderState extends State<Create_Order> {
                               suffixIcon: Icon(
                                   Icons.arrow_drop_down_circle_outlined),
                               labelText: "Outlet",
-                              hintText: "Please Select Outlet",
                             ),
                             dropdownHeight: 100,
                             onChanged: (dynamic value) {
@@ -316,6 +316,7 @@ class _CreateOrderState extends State<Create_Order> {
                                   if (index >= 0 && index < dealer_account_list.length) {
                                     selected_dealer_account = dealer_account_list[index]; // Set the corresponding ID
                                   }
+                                  data1=fetchData(selected_dealer_Id!);
                                   print("dealer have following data $selected_dealer_Id,$selected_dealer_account Thank you");
 
 
@@ -970,7 +971,7 @@ class _CreateOrderState extends State<Create_Order> {
                         leading: Radio(
                           fillColor: MaterialStateProperty.all(Color(0xff12283D)),
                           overlayColor:
-                          MaterialStateProperty.all(Color(0xff12283D)),
+                          MaterialStateProperty.all(Constants.secondary_color),
                           value: "Self",
                           groupValue: _site,
                           onChanged: (value) {
@@ -1060,7 +1061,7 @@ class _CreateOrderState extends State<Create_Order> {
                           fontWeight: FontWeight.bold,
                           color: Colors.white),
                     ),
-                    color: Color(0xff12283d),
+                    color: Constants.secondary_color,
                     elevation: 0,
                     minWidth: 350,
                     height: 60,

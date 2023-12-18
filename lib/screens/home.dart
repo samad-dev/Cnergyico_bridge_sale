@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:dropdown_plus/dropdown_plus.dart';
 import 'package:hascol_inspection/screens/Task_Dashboard.dart';
+import 'package:hascol_inspection/utils/constants.dart';
 import 'package:intl/intl.dart';
 import 'package:location/location.dart';
 
@@ -45,13 +46,16 @@ class _HomeScreenState extends State<Home> {
   DateTime? selectedDate;
   TextEditingController reasonController = TextEditingController();
   TextEditingController reasontransferController = TextEditingController();
-  List<String> tm_list = [];
-  List<String> tm_id_list = [];
-  String? selectedtmformId;
-  String? selectedtmformType;
+  String tm_name ="";
+  String asm_name="";
+  late String transfer_id;
+  List<String> list1 =[];
+  List<String> list2 =[];
+  List<Map<String, dynamic>> filteredList =[];
   String? user_privilege;
   LocationData? _currentLocation;
   late String result;
+  var Name;
   var dealerlat;
   var dealerlng;
   var inspectorlat;
@@ -63,7 +67,6 @@ class _HomeScreenState extends State<Home> {
     Total_outlet();
     Total_orders();
     Inspection_task();
-    TransfersZM();
     _getLocation();
   }
 
@@ -133,62 +136,70 @@ class _HomeScreenState extends State<Home> {
       throw Exception('Failed to fetch data from the API');
     }
   }
+
   Future<void> Inspection_task() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
+    Name = prefs.getString("name");
     print(id);
     var pre = prefs.getString("privilege");
-    final response = await http.get(
-        Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/inspector_task.php?key=03201232927&id=$id&pre=$pre'));
+    final response = await http.get(Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/inspector_task.php?key=03201232927&id=$id&pre=$pre'));
+
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
+
       setState(() {
+        DateTime currentDatetime = DateTime.now();
+        String currentDate = '${currentDatetime.year}-${currentDatetime.month}-${currentDatetime.day}';
         inspection_task = List<Map<String, dynamic>>.from(data);
-        total_task = '${data.length}';
-        if(data.length>=3){
-          inspection_length=3;
-        }else{
-          inspection_length=data.length;
-        }
+        total_task = '${inspection_task.length}';
+
+        filteredList = inspection_task.where((task) {
+          // Parse the time from the map to DateTime
+          DateTime taskTime = DateTime.parse(task["time"]);
+
+          // Format the taskTime to match the currentDate format
+          String formattedTaskDate = '${taskTime.year}-${taskTime.month}-${taskTime.day}';
+
+          // Compare the formatted dates
+          return formattedTaskDate == currentDate;
+        }).toList();
+
+        // Now filteredList contains tasks for the current date
       });
     } else {
       throw Exception('Failed to fetch data from the API');
     }
   }
-  Future<void> TransfersZM() async {
+
+
+  Future<void> TransfersZM(String dealer_id) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     var pre = prefs.getString("privilege");
-    if(pre=="ZM" || pre == "zm"){
-      final response = await http.get(Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/individual_tm_of_zm.php?key=03201232927&zm_id=$id'));
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        List<String> typeList = data.map((item) => '${item['name']} - ${item['privilege']}').toList();
-        List<String> idList = data.map((item) => item['tm_id'].toString()).toList();
+
+    final response = await http.get(Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_spec_dealer.php?key=03201232927&dealer_id=$dealer_id'));
+
+    if (response.statusCode == 200) {
+      // Parse the response and get TM and ASM data
+      dynamic responseData = json.decode(response.body);
+
+      if (responseData is List && responseData.isNotEmpty) {
+        // If responseData is a List, access the first item (assuming only one item is expected)
+        Map<String, dynamic> dealerData = responseData[0];
         setState(() {
-          tm_list = typeList;
-          tm_id_list = idList;
+          list1 = user_privilege?.toLowerCase() == "tm" ? ["${dealerData["asm_name"]} - tm"] : ["${dealerData["tm_name"]} - rm", "${dealerData["asm_name"]} - tm"];
+          list2 = [dealerData["asm"],dealerData["tm"]];
         });
+
       } else {
-        throw Exception('Failed to fetch data from the API');
+        throw Exception('The API response is not a non-empty List');
       }
-    }
-    else if(pre =="TM"|| pre=="tm"){
-      final response = await http.get(
-          Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/individual_asm_of_tm.php?key=03201232927&tm_id=$id'));
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        List<String> typeList = data.map((item) => '${item['name']} - ${item['privilege']}').toList();
-        List<String> idList = data.map((item) => item['tm_id'].toString()).toList();
-        setState(() {
-          tm_list = typeList;
-          tm_id_list = idList;
-        });
-      } else {
-        throw Exception('Failed to fetch data from the API');
-      }
+    } else {
+      throw Exception('Failed to fetch data from the API');
     }
   }
+
   void sendRequestReschedule(var taskId,String oldDate)async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
@@ -232,7 +243,7 @@ class _HomeScreenState extends State<Home> {
 
     });
   }
-  void sendRequestTransfer(var taskId)async {
+  void sendRequestTransfer(var taskId,var transferid)async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     final apiUrl = "http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/transfer_task.php";
@@ -240,7 +251,7 @@ class _HomeScreenState extends State<Home> {
       "user_id": id,
       "task_id": taskId,
       "row_id": '',
-      "transfer_to":selectedtmformId,
+      "transfer_to":transferid,
       "reason": reasontransferController.text.toString(),
     };
     final response = await http.post(Uri.parse(apiUrl), body: data);
@@ -271,7 +282,6 @@ class _HomeScreenState extends State<Home> {
     }
     setState(() {
       reasontransferController.clear();
-      selectedtmformId = null;
     });
   }
   Future<void> ISIN(String d_lat,String d_lng,String i_lat,String i_lng,dealer_name,dealer_id,id) async {
@@ -342,19 +352,7 @@ class _HomeScreenState extends State<Home> {
               children: [
                 Row(
                   children: [
-                    CircleAvatar(
-                      backgroundColor: Color(0xff12283D),
-                      radius: 30,
-                      child: Text(
-                        'SB',
-                        style: GoogleFonts.poppins(
-                          fontSize: 22,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontStyle: FontStyle.normal,
-                        ),
-                      ), //Text
-                    ),
+                    Image.asset("assets/images/puma icon.png", width: MediaQuery.of(context).size.width/6 ,),
                     SizedBox(
                       width: 5,
                     ),
@@ -373,7 +371,7 @@ class _HomeScreenState extends State<Home> {
                             ),
                           ),
                           Text(
-                            'Sales Bridge',
+                            '$Name',
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               color: Color(0xff000000),
@@ -391,7 +389,7 @@ class _HomeScreenState extends State<Home> {
                     // Use the FaIcon Widget + FontAwesomeIcons class for the IconData
                     icon: Icon(
                       Icons.add_box_rounded,
-                      color: Color(0xff12283D),
+                      color: Constants.secondary_color,
                       size: 35,
                     ),
                     onPressed: () {
@@ -447,61 +445,52 @@ class _HomeScreenState extends State<Home> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Card(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(10))),
-                  color: Color(0xff3a833c),//color: Color(0xff12283D),
-                  elevation: 15,
-                  child: SizedBox(
-                    width: 165,
-                    height: 160,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(
-                            height: 5,
-                          ),
-                          Card(
-                            color: Color(0xff586776),
-                            child: SizedBox(
-                              width: 30,
-                              height: 30,
-                              child: Icon(
-                                Icons.bookmark_border,
-                                color: Colors.white,
-                              ),
+                Expanded(
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10))),
+                    color: Color(0xff3a833c),//color: Color(0xff12283D),
+                    elevation: 15,
+                    child: SizedBox(
+                      width: 165,
+                      height: 160,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(
+                              height: 5,
                             ),
-                          ), //Text
-                          const SizedBox(
-                            height: 5,
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Total Orders',
-                                style: GoogleFonts.poppins(
-                                  color: Color(0xffffffff),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                  fontStyle: FontStyle.normal,
+                            Card(
+                              color: Color(0xff586776),
+                              child: SizedBox(
+                                width: 30,
+                                height: 30,
+                                child: Icon(
+                                  Icons.bookmark_border,
+                                  color: Colors.white,
                                 ),
                               ),
-                              Text(
-                                '$total_orders Orders',
-                                style: GoogleFonts.montserrat(
-                                  color: Color(0xffc7c7c7),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                  fontStyle: FontStyle.normal,
+                            ), //Text
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total Orders',
+                                  style: GoogleFonts.poppins(
+                                    color: Color(0xffffffff),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                    fontStyle: FontStyle.normal,
+                                  ),
                                 ),
-                              ),
-                              OutlinedButton(
-                                child: Text(
-                                  'View Order',
+                                Text(
+                                  '$total_orders Orders',
                                   style: GoogleFonts.montserrat(
                                     color: Color(0xffc7c7c7),
                                     fontWeight: FontWeight.w600,
@@ -509,87 +498,89 @@ class _HomeScreenState extends State<Home> {
                                     fontStyle: FontStyle.normal,
                                   ),
                                 ),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                      width: 1.0, color: Color(0xd5e0e0e0)),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                OutlinedButton(
+                                  child: Text(
+                                    'View Order',
+                                    style: GoogleFonts.montserrat(
+                                      color: Color(0xffc7c7c7),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                      fontStyle: FontStyle.normal,
+                                    ),
                                   ),
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => Orders()),
-                                  );
-                                },
-                              )
-                            ],
-                          ),
-
-                          //SizedBox
-                          //T //SizedBox
-                          //SizedBox
-                        ],
-                      ), //Column
-                    ), //Padding
-                  ), //SizedBox,
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(
+                                        width: 1.0, color: Color(0xd5e0e0e0)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => Orders()),
+                                    );
+                                  },
+                                )
+                              ],
+                            ),
+                  
+                            //SizedBox
+                            //T //SizedBox
+                            //SizedBox
+                          ],
+                        ), //Column
+                      ), //Padding
+                    ), //SizedBox,
+                  ),
                 ),
-                Card(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(10))),
-                  color: Color(0xff3a833c),//color: Color(0xff12283D),
-                  elevation: 15,
-                  child: SizedBox(
-                    width: 165,
-                    height: 160,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(
-                            height: 5,
-                          ),
-                          Card(
-                            color: Color(0xff586776),
-                            child: SizedBox(
-                              width: 30,
-                              height: 30,
-                              child: Icon(
-                                FluentIcons.gas_pump_24_regular,
-                                color: Colors.white,
-                              ),
+                Expanded(
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10))),
+                    color: Color(0xff3a833c),//color: Color(0xff12283D),
+                    elevation: 15,
+                    child: SizedBox(
+                      width: 165,
+                      height: 160,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(
+                              height: 5,
                             ),
-                          ), //Text
-                          const SizedBox(
-                            height: 5,
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Total Outlets',
-                                style: GoogleFonts.poppins(
-                                  color: Color(0xffffffff),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                  fontStyle: FontStyle.normal,
+                            Card(
+                              color: Color(0xff586776),
+                              child: SizedBox(
+                                width: 30,
+                                height: 30,
+                                child: Icon(
+                                  FluentIcons.gas_pump_24_regular,
+                                  color: Colors.white,
                                 ),
                               ),
-                              Text(
-                                '$total_outlet Outlets',
-                                style: GoogleFonts.montserrat(
-                                  color: Color(0xffc7c7c7),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                  fontStyle: FontStyle.normal,
+                            ), //Text
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total Outlets',
+                                  style: GoogleFonts.poppins(
+                                    color: Color(0xffffffff),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                    fontStyle: FontStyle.normal,
+                                  ),
                                 ),
-                              ),
-                              OutlinedButton(
-                                child: Text(
-                                  'View Outlets',
+                                Text(
+                                  '$total_outlet Outlets',
                                   style: GoogleFonts.montserrat(
                                     color: Color(0xffc7c7c7),
                                     fontWeight: FontWeight.w600,
@@ -597,31 +588,42 @@ class _HomeScreenState extends State<Home> {
                                     fontStyle: FontStyle.normal,
                                   ),
                                 ),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                      width: 1.0, color: Color(0xd5e0e0e0)),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                OutlinedButton(
+                                  child: Text(
+                                    'View Outlets',
+                                    style: GoogleFonts.montserrat(
+                                      color: Color(0xffc7c7c7),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                      fontStyle: FontStyle.normal,
+                                    ),
                                   ),
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => Outlets()),
-                                  );
-                                },
-                              )
-                            ],
-                          ),
-
-                          //SizedBox
-                          //T //SizedBox
-                          //SizedBox
-                        ],
-                      ), //Column
-                    ), //Padding
-                  ), //SizedBox,
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(
+                                        width: 1.0, color: Color(0xd5e0e0e0)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => Outlets()),
+                                    );
+                                  },
+                                )
+                              ],
+                            ),
+                  
+                            //SizedBox
+                            //T //SizedBox
+                            //SizedBox
+                          ],
+                        ), //Column
+                      ), //Padding
+                    ), //SizedBox,
+                  ),
                 ),
 
                 //
@@ -633,83 +635,86 @@ class _HomeScreenState extends State<Home> {
             
             Expanded(
               child: SingleChildScrollView(
-                child: Card(
-                  color: Color(0xfff9f9f9),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8,left: 8, right: 8),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Upcoming',
-                              style: GoogleFonts.poppins(
-                                textStyle: Theme.of(context).textTheme.displayLarge,
-                                fontSize: 18,
-                                color: Color(0xff12283D),
-                                fontWeight: FontWeight.w700,
-                                fontStyle: FontStyle.normal,
-                              ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8,left: 8, right: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Upcoming',
+                            style: GoogleFonts.poppins(
+                              textStyle: Theme.of(context).textTheme.displayLarge,
+                              fontSize: 18,
+                              color: Color(0xff12283D),
+                              fontWeight: FontWeight.w700,
+                              fontStyle: FontStyle.normal,
                             ),
-                            Text(
-                              'View All',
-                              style: GoogleFonts.poppins(
-                                textStyle: Theme.of(context).textTheme.displaySmall,
-                                fontSize: 15,
-                                color: Color(0xff727272),
-                                fontWeight: FontWeight.w300,
-                                fontStyle: FontStyle.normal,
-                              ),
+                          ),
+                          Text(
+                            'View All',
+                            style: GoogleFonts.poppins(
+                              textStyle: Theme.of(context).textTheme.displaySmall,
+                              fontSize: 15,
+                              color: Color(0xff727272),
+                              fontWeight: FontWeight.w300,
+                              fontStyle: FontStyle.normal,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      ListView.builder(
-                          physics: NeverScrollableScrollPhysics(),
-                          scrollDirection: Axis.vertical,
-                          shrinkWrap: true,
-                          itemCount: inspection_length,
-                          itemBuilder: (BuildContext context, int index2) {
-                            final type = inspection_task[index2]['type'];
-                            final dealer_name = inspection_task[index2]['dealer_name'];
-                            final dealer_id = inspection_task[index2]['dealer_id'];
-                            final time = inspection_task[index2]['time'];
-                            final id = inspection_task[index2]['id'];
-                            final co_ordinates = inspection_task[index2]['co_ordinates'];
-                            var dealerlatlng = co_ordinates.split(',');
-                            dealerlat= dealerlatlng[0];
-                            dealerlng = dealerlatlng[1];
-                            return Card(
-                              elevation: 10,
-                              color: Color(0xffffffff),
-                              child: Container(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
+                    ),
+                    ListView.builder(
+                        physics: NeverScrollableScrollPhysics(),
+                        scrollDirection: Axis.vertical,
+                        shrinkWrap: true,
+                        itemCount: filteredList.length,
+                        itemBuilder: (BuildContext context, int index2) {
+                          final type = filteredList[index2]['type'];
+                          final dealer_name = filteredList[index2]['dealer_name'];
+                          final dealer_id = filteredList[index2]['dealer_id'];
+                          final time = filteredList[index2]['time'];
+                          final id = filteredList[index2]['id'];
+                          final co_ordinates = filteredList[index2]['co_ordinates'];
+                          var dealerlatlng = co_ordinates.split(',');
+                          dealerlat= dealerlatlng[0];
+                          dealerlng = dealerlatlng[1];
+                          return Card(
+                            elevation: 10,
+                            color: Color(0xffffffff),
+                            child: Container(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                      height: 20,
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          child: Text(
                                             'Inspection at $dealer_name',
                                             style: GoogleFonts.poppins(
                                                 fontWeight: FontWeight.w600,
                                                 fontStyle: FontStyle.normal,
                                                 color: Color(0xff12283D),
                                                 fontSize: 14),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                          if(user_privilege == "ZM" || user_privilege == "zm" || user_privilege == "TM"||user_privilege == "tm")
-                                            GestureDetector(
-                                            onTap: (){
+                                          width: MediaQuery.of(context).size.width/1.3,
+                                        ),
+                                        if(user_privilege == "ZM" || user_privilege == "zm" || user_privilege == "TM"||user_privilege == "tm")
+                                          GestureDetector(
+                                            onTap: () async {
                                               reasontransferController.clear();
-                                              selectedtmformId = null;
+                                              await TransfersZM(dealer_id);
                                               showDialog(
                                                 context: context,
                                                 builder: (BuildContext context) {
@@ -718,33 +723,29 @@ class _HomeScreenState extends State<Home> {
                                                         return AlertDialog(
                                                           title: Text("Transfer"),
                                                           content: Container(
-                                                            height: MediaQuery.of(context).size.height/3.4,
-                                                            width: MediaQuery.of(context).size.width/1.5,
+                                                            height: MediaQuery.of(context).size.height/3,
+                                                            width: MediaQuery.of(context).size.width/1.2,
                                                             child: Column(
                                                               children: [
                                                                 TextDropdownFormField(
-                                                                  options:tm_list,
-                                                                  decoration: InputDecoration(
-                                                                    border: OutlineInputBorder(
-                                                                      borderRadius: BorderRadius.circular(18.0),
-                                                                    ),
-                                                                    suffixIcon: Icon(Icons.arrow_drop_down_circle_outlined),
-                                                                    labelText: "Select employee",
-                                                                  ),
-                                                                  dropdownHeight: 100,
-                                                                  onChanged: (dynamic value) {
-                                                                    setState(() {
-                                                                      selectedtmformType = value; // Set the selected type
-                                                                      // Find the index of the selected type in uniform_type_list
-                                                                      int index = tm_list.indexOf(value);
-                                                                      if (index >= 0 && index < tm_id_list.length) {
-                                                                        selectedtmformId = tm_id_list[index]; // Set the corresponding ID
-                                                                      }
-                                                                    });
-                                                                  },
-                                                                ),
-                                                                Padding(
-                                                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                                                options: list1,
+                                                            decoration: InputDecoration(
+                                                              isDense: false,
+                                                              border: OutlineInputBorder(
+                                                                borderRadius: BorderRadius.circular(18.0),
+                                                              ),
+                                                              suffixIcon: Icon(Icons.arrow_drop_down_circle_outlined),
+                                                              labelText: "Select employee",
+                                                            ),
+                                                            dropdownHeight: 100,
+                                                            onChanged: (dynamic value) {
+                                                              setState(() {
+                                                                transfer_id=value;
+                                                              });
+                                                            },
+                                                          ),
+                                                            Padding(
+                                                                  padding: const EdgeInsets.symmetric(vertical: 5),
                                                                   child: TextField(
                                                                     controller: reasontransferController,
                                                                     decoration: InputDecoration(
@@ -755,28 +756,58 @@ class _HomeScreenState extends State<Home> {
                                                                       ),
                                                                     ),
                                                                     maxLines: 3,
-                                                                    minLines: 3,
+                                                                    minLines: 2,
                                                                   ),
                                                                 ),
-                                                                Row(
-                                                                  mainAxisAlignment: MainAxisAlignment.end,
-                                                                  children: [
-                                                                    ElevatedButton(
-                                                                      onPressed: (){
-                                                                        sendRequestTransfer(id);
-                                                                      },
-                                                                      child: Text("Start"),
+                                                              ],
+
+                                                            ),
+                                                          ),
+                                                          actions: [
+                                                            Row(
+                                                              mainAxisAlignment: MainAxisAlignment.end,
+                                                              children: [
+                                                                ElevatedButton(
+                                                                  onPressed: (){
+                                                                    List<String> parts = transfer_id.split('-');
+                                                                    String secondPart = parts.length > 1 ? parts[1].trim() : '';
+                                                                    if(secondPart=='tm'){
+                                                                      print("hello world ${list2[0]}");
+                                                                      sendRequestTransfer(id,list2[0]);
+                                                                    }
+                                                                    else if(secondPart=='rm'){
+                                                                      print("hello world ${list2[1]}");
+                                                                      sendRequestTransfer(id,list2[1]);
+                                                                    }
+                                                                  },
+                                                                  style: ElevatedButton.styleFrom(
+                                                                      backgroundColor: Constants.primary_color
+                                                                  ),
+                                                                  child: Text(
+                                                                    "Start",
+                                                                    style: TextStyle(
+                                                                      color: Colors.white,
+                                                                      fontSize: 12,
                                                                     ),
-                                                                    SizedBox(width: 10,),
-                                                                    ElevatedButton(
-                                                                      onPressed: () => Navigator.of(context).pop(),
-                                                                      child: Text("Cancel"),
+                                                                  ),
+                                                                ),
+                                                                SizedBox(width: 10,),
+                                                                ElevatedButton(
+                                                                  onPressed: () => Navigator.of(context).pop(),
+                                                                  style: ElevatedButton.styleFrom(
+                                                                      backgroundColor: Constants.primary_color
+                                                                  ),
+                                                                  child: Text(
+                                                                    "Cancel",
+                                                                    style: TextStyle(
+                                                                      color: Colors.white,
+                                                                      fontSize: 12,
                                                                     ),
-                                                                  ],
+                                                                  ),
                                                                 ),
                                                               ],
                                                             ),
-                                                          ),
+                                                          ],
                                                         );
                                                       }
                                                   );
@@ -784,275 +815,337 @@ class _HomeScreenState extends State<Home> {
                                               );
                                             },
                                             child: CircleAvatar(
-                                                backgroundColor: Color(0xff12283D),
+                                                backgroundColor: Constants.secondary_color,
                                                 child: Image.asset(
                                                   "assets/images/change.png",
                                                   width: 35,
                                                 )
                                             ),
                                           )
-                                        ],
-                                      ),
-                                      SizedBox(height: 10,),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          TextButton(
-                                            child: Text(
-                                              'Naviagate',
-                                              style: GoogleFonts.montserrat(
-                                                fontWeight: FontWeight.bold,
-                                                fontStyle: FontStyle.normal,
-                                                color: Colors.white,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                            style: ButtonStyle(
-                                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                                RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(20.0), // Adjust the radius as needed
-                                                ),
-                                              ),
-                                              backgroundColor: MaterialStateProperty.all<Color>(Color(0xff12283d)), // Change to your desired light color
-                                            ),
-                                            onPressed: () async{
-                                              final availableMaps = await MapLauncher.installedMaps;
-                                              print(availableMaps); // [AvailableMap { mapName: Google Maps, mapType: google }, ...]
+                                      ],
+                                    ),
+                                    SizedBox(height: 10,),
 
-                                              await availableMaps.first.showMarker(
-                                                coords: Coords(double.parse(dealerlat),double.parse(dealerlng)),
-                                                title: "$dealer_name",
-                                              );
-                                              print("Hello, world!");
-                                            },
-                                          ),
-                                          Text(
-                                            'Details',
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        TextButton(
+                                          child: Text(
+                                            'Naviagate',
                                             style: GoogleFonts.montserrat(
-                                                fontWeight: FontWeight.w200,
-                                                fontStyle: FontStyle.normal,
-                                                color: Color(0xff737373),
-                                                fontSize: 12),
+                                              fontWeight: FontWeight.bold,
+                                              fontStyle: FontStyle.normal,
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
                                           ),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Divider(height: 1, color: Color(0xffBFBFBF)),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          Wrap(
-                                            children: [
-                                              Icon(
-                                                FluentIcons.clock_48_regular,
-                                                size: 15,
-                                                color: Color(0xff12283d),
+                                          style: ButtonStyle(
+                                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                              RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(20.0), // Adjust the radius as needed
                                               ),
-                                              SizedBox(
-                                                width: 5,
-                                              ),
-                                              Container(
-                                                width:MediaQuery.of(context).size.width/3.5,
-                                                child: Text(
-                                                  '$time',
-                                                  style: GoogleFonts.montserrat(
-                                                      fontWeight: FontWeight.w200,
-                                                      fontStyle: FontStyle.normal,
-                                                      color: Color(0xff737373),
-                                                      fontSize: 12),
-                                                  maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                            ],
+                                            ),
+                                            backgroundColor: MaterialStateProperty.all<Color>(Constants.secondary_color,), // Change to your desired light color
                                           ),
-                                          Row(
-                                            children: [
-                                              ElevatedButton(
-                                                child: Text(
-                                                  'Reschedule',
-                                                  style: GoogleFonts.poppins(
-                                                    fontWeight: FontWeight.w500,
+                                          onPressed: () async{
+                                            var dealerlatlng = co_ordinates.split(',');
+                                            dealerlat= dealerlatlng[0];
+                                            dealerlng = dealerlatlng[1];
+                                            final availableMaps = await MapLauncher.installedMaps;
+                                            print(availableMaps); // [AvailableMap { mapName: Google Maps, mapType: google }, ...]
+
+                                            await availableMaps.first.showMarker(
+                                              coords: Coords(double.parse(dealerlat),double.parse(dealerlng)),
+                                              title: "$dealer_name",
+                                            );
+                                            print("Hello, world!");
+                                          },
+                                        ),
+                                        Text(
+                                          'Details',
+                                          style: GoogleFonts.montserrat(
+                                              fontWeight: FontWeight.w200,
+                                              fontStyle: FontStyle.normal,
+                                              color: Color(0xff737373),
+                                              fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    Divider(height: 1, color: Color(0xffBFBFBF)),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        Wrap(
+                                          children: [
+                                            Icon(
+                                              FluentIcons.clock_48_regular,
+                                              size: 15,
+                                              color: Constants.secondary_color,
+                                            ),
+                                            SizedBox(
+                                              width: 5,
+                                            ),
+                                            Container(
+                                              width:MediaQuery.of(context).size.width/4,
+                                              child: Text(
+                                                '$time',
+                                                style: GoogleFonts.montserrat(
+                                                    fontWeight: FontWeight.w200,
                                                     fontStyle: FontStyle.normal,
-                                                  ),
+                                                    color: Color(0xff737373),
+                                                    fontSize: 11),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            ElevatedButton(
+                                              child: Text(
+                                                'Reschedule',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                  fontStyle: FontStyle.normal,
+                                                  color: Colors.white,
                                                 ),
-                                                style: ElevatedButton.styleFrom(
-                                                  primary: Color(0xff12283D),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(30.0),
-                                                  ),
+                                              ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Constants.secondary_color,
 
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(30.0),
                                                 ),
-                                                onPressed: () {
-                                                  selectedDate = null;
-                                                  reasonController.clear();
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (BuildContext context) {
-                                                      return StatefulBuilder(
-                                                          builder: (BuildContext context, StateSetter setState){
-                                                        return AlertDialog(
-                                                          title: Text("Reschedule"),
-                                                          content: Container(
-                                                            height: MediaQuery.of(context).size.height/3.4,
-                                                            width: MediaQuery.of(context).size.width/1.5,
-                                                            child: Column(
-                                                              children: [
-                                                                Container(
-                                                                  decoration: BoxDecoration(
-                                                                    borderRadius: BorderRadius.circular(20.0),
-                                                                    border: Border.all(
-                                                                    ),
-                                                                  ),
-                                                                  child: Row(
-                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                                                    children: [
-                                                                      selectedDate != null
-                                                                          ? Padding(
-                                                                        padding: const EdgeInsets.only(left: 8.0),
-                                                                        child: Container(
-                                                                          width: MediaQuery.of(context).size.width/3.4,
-                                                                          child: Text(
-                                                                            selectedDate != null
-                                                                                ? DateFormat('yyyy-MM-dd HH:mm:ss').format(selectedDate!)
-                                                                                : "Select a Date",
-                                                                            overflow: TextOverflow.ellipsis,
-                                                                          ),
-                                                                        ),
-                                                                      )
-                                                                          : Padding(
-                                                                        padding: const EdgeInsets.only(left: 8.0),
-                                                                        child: Text("Select a Date"),
+                                                fixedSize: const Size(120, 30),
+                                              ),
+                                              onPressed: () {
+                                                selectedDate = null;
+                                                reasonController.clear();
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (BuildContext context) {
+                                                    return StatefulBuilder(
+                                                        builder: (BuildContext context, StateSetter setState){
+                                                          return AlertDialog(
+                                                            title: Text("Reschedule"),
+                                                            content: Container(
+                                                              height: MediaQuery.of(context).size.height/3.4,
+                                                              width: MediaQuery.of(context).size.width/1.5,
+                                                              child: Column(
+                                                                children: [
+                                                                  Container(
+                                                                    decoration: BoxDecoration(
+                                                                      borderRadius: BorderRadius.circular(20.0),
+                                                                      border: Border.all(
                                                                       ),
-                                                                      Container(
-                                                                        height: 40, // Adjust the height as needed
-                                                                        child: ElevatedButton(
-                                                                          onPressed: () async {
-                                                                            final DateTime? pickedDate = await showDatePicker(
-                                                                              context: context,
-                                                                              initialDate: DateTime.now(),
-                                                                              firstDate: DateTime.now(),
-                                                                              lastDate: DateTime(2101),
-                                                                            );
-                                                                            if (pickedDate != null) {
-                                                                              final TimeOfDay? pickedTime = await showTimePicker(
+                                                                    ),
+                                                                    child: Row(
+                                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                                                      children: [
+                                                                        selectedDate != null
+                                                                            ? Padding(
+                                                                          padding: const EdgeInsets.only(left: 8.0),
+                                                                          child: Container(
+                                                                            width: MediaQuery.of(context).size.width/3.4,
+                                                                            child: Text(
+                                                                              selectedDate != null
+                                                                                  ? DateFormat('yyyy-MM-dd HH:mm:ss').format(selectedDate!)
+                                                                                  : "Select a Date",
+                                                                              overflow: TextOverflow.ellipsis,
+                                                                            ),
+                                                                          ),
+                                                                        )
+                                                                            : Padding(
+                                                                          padding: const EdgeInsets.only(left: 8.0),
+                                                                          child: Text("Select a Date"),
+                                                                        ),
+                                                                        Container(
+                                                                          height: 40, // Adjust the height as needed
+                                                                          child: ElevatedButton(
+                                                                            onPressed: () async {
+                                                                              final DateTime? pickedDate = await showDatePicker(
                                                                                 context: context,
-                                                                                initialTime: TimeOfDay.fromDateTime(DateTime.now(),),
+                                                                                initialDate: DateTime.now(),
+                                                                                firstDate: DateTime.now(),
+                                                                                lastDate: DateTime(2101),
                                                                               );
+                                                                              if (pickedDate != null) {
+                                                                                final TimeOfDay? pickedTime = await showTimePicker(
+                                                                                  context: context,
+                                                                                  initialTime: TimeOfDay.fromDateTime(DateTime.now(),),
+                                                                                );
 
-                                                                              if (pickedTime != null) {
-                                                                                setState(() {
-                                                                                  selectedDate = DateTime(
-                                                                                    pickedDate.year,
-                                                                                    pickedDate.month,
-                                                                                    pickedDate.day,
-                                                                                    pickedTime.hour,
-                                                                                    pickedTime.minute,
-                                                                                  );
-                                                                                });
+                                                                                if (pickedTime != null) {
+                                                                                  setState(() {
+                                                                                    selectedDate = DateTime(
+                                                                                      pickedDate.year,
+                                                                                      pickedDate.month,
+                                                                                      pickedDate.day,
+                                                                                      pickedTime.hour,
+                                                                                      pickedTime.minute,
+                                                                                    );
+                                                                                  });
+                                                                                }
                                                                               }
-                                                                            }
-                                                                          },
-                                                                          style: ElevatedButton.styleFrom(
-                                                                            shape: RoundedRectangleBorder(
-                                                                              borderRadius: BorderRadius.only(
-                                                                                topRight: Radius.circular(20.0),
-                                                                                bottomRight: Radius.circular(20.0),
+                                                                            },
+                                                                            style: ElevatedButton.styleFrom(
+                                                                                shape: RoundedRectangleBorder(
+                                                                                  borderRadius: BorderRadius.only(
+                                                                                    topRight: Radius.circular(20.0),
+                                                                                    bottomRight: Radius.circular(20.0),
+                                                                                  ),
+                                                                                ),
+                                                                                backgroundColor: Constants.primary_color
+                                                                            ),
+                                                                            child: Text(
+                                                                              "Select Date",
+                                                                              style: TextStyle(
+                                                                                color: Colors.white,
+                                                                                fontSize: 12,
                                                                               ),
                                                                             ),
                                                                           ),
-                                                                          child: Text("Select Date"),
-                                                                        ),
-                                                                      )
-                                                                    ],
-                                                                  ),
+                                                                        )
+                                                                      ],
+                                                                    ),
 
-                                                                ),
-                                                                Padding(
-                                                                  padding: const EdgeInsets.symmetric(vertical: 10),
-                                                                  child: TextField(
-                                                                    controller: reasonController,
-                                                                    decoration: InputDecoration(
-                                                                      labelText: 'Reason',
-                                                                      hintText: "Reason for Reschedule",
-                                                                      border: OutlineInputBorder(
-                                                                        borderRadius: BorderRadius.circular(20.0), // Adjust the radius as needed
+                                                                  ),
+                                                                  Padding(
+                                                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                                                    child: TextField(
+                                                                      controller: reasonController,
+                                                                      decoration: InputDecoration(
+                                                                        labelText: 'Reason',
+                                                                        hintText: "Reason for Reschedule",
+                                                                        border: OutlineInputBorder(
+                                                                          borderRadius: BorderRadius.circular(20.0), // Adjust the radius as needed
+                                                                        ),
+                                                                      ),
+                                                                      maxLines: 3,
+                                                                      minLines: 3,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                            actions: [
+                                                              Row(
+                                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                                children: [
+                                                                  ElevatedButton(
+                                                                    onPressed: () {
+                                                                      // Check if both date and reason are not null
+                                                                      if (selectedDate != null && reasonController.text.isNotEmpty) {
+                                                                        sendRequestReschedule(id, selectedDate.toString());
+                                                                      } else {
+                                                                        // Show a dialog or a message indicating that date and reason are required
+                                                                        showDialog(
+                                                                          context: context,
+                                                                          builder: (BuildContext context) {
+                                                                            return AlertDialog(
+                                                                              title: Text("Validation Error"),
+                                                                              content: Text("Please select a date and provide a reason."),
+                                                                              actions: [
+                                                                                TextButton(
+                                                                                  onPressed: () {
+                                                                                    Navigator.of(context).pop();
+                                                                                  },
+                                                                                  child: Text("OK"),
+                                                                                ),
+                                                                              ],
+                                                                            );
+                                                                          },
+                                                                        );
+                                                                      }
+                                                                    },
+                                                                    style: ElevatedButton.styleFrom(
+                                                                        backgroundColor: Constants.primary_color
+                                                                    ),
+                                                                    child: Text(
+                                                                      "Start",
+                                                                      style: TextStyle(
+                                                                        color: Colors.white,
+                                                                        fontSize: 12,
                                                                       ),
                                                                     ),
-                                                                    maxLines: 3,
-                                                                    minLines: 3,
                                                                   ),
-                                                                ),
-                                                                Row(
-                                                                  mainAxisAlignment: MainAxisAlignment.end,
-                                                                  children: [
-                                                                    ElevatedButton(
-                                                                      onPressed: (){
-                                                                        sendRequestReschedule(id,time.toString());
-                                                                      },
-                                                                      child: Text("Start"),
+                                                                  SizedBox(width: 10,),
+                                                                  ElevatedButton(
+                                                                    onPressed: () => Navigator.of(context).pop(),
+                                                                    style: ElevatedButton.styleFrom(
+                                                                        backgroundColor: Constants.primary_color
                                                                     ),
-                                                                    SizedBox(width: 10,),
-                                                                    ElevatedButton(
-                                                                      onPressed: () => Navigator.of(context).pop(),
-                                                                      child: Text("Cancel"),
+                                                                    child: Text(
+                                                                      "Cancel",
+                                                                      style: TextStyle(
+                                                                        color: Colors.white,
+                                                                        fontSize: 12,
+                                                                      ),
                                                                     ),
-                                                                  ],
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        );
-                                                      }
-                                                      );
-                                                    },
-                                                  );
-                                                },
-                                              ),
-                                              SizedBox(
-                                                width: 10,
-                                              ),
-                                              ElevatedButton(
-                                                child: Text(
-                                                  'Start',
-                                                  style: GoogleFonts.poppins(
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ],
+                                                          );
+                                                        }
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                            SizedBox(
+                                              width: 5,
+                                            ),
+                                            ElevatedButton(
+                                              child: Text(
+                                                'Start',
+                                                style: GoogleFonts.poppins(
+                                                    fontSize: 12,
                                                     fontWeight: FontWeight.w500,
                                                     fontStyle: FontStyle.normal,
-                                                  ),
+                                                    color: Colors.white
                                                 ),
-                                                style: ElevatedButton.styleFrom(
-                                                  primary: Color(0xff12283D),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(30.0),
-                                                  ),
-
-                                                ),
-                                                onPressed: () {
-                                                  ISIN(dealerlat,dealerlng,inspectorlat,inspectorlng,dealer_name,dealer_id,id);
-
-                                                },
                                               ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Constants.secondary_color,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(30.0),
+                                                ),
+                                                fixedSize: Size(85, 40),
+                                              ),
+                                              onPressed: () {
+                                                var dealerlatlng = co_ordinates.split(',');
+                                                dealerlat= dealerlatlng[0];
+                                                dealerlng = dealerlatlng[1];
+                                                ISIN(dealerlat,dealerlng,inspectorlat,inspectorlng,dealer_name,dealer_id,id);
+
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
-                            );
-                          }
-                      ),
-                    ],
-                  ),
+                            ),
+                          );
+                        }
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1078,7 +1171,7 @@ class _HomeScreenState extends State<Home> {
             showUnselectedLabels: true,
             showSelectedLabels: true,
             selectedIconTheme: IconThemeData(
-              color: Color(0xff12283D),
+              color: Constants.primary_color,
             ),
             type: BottomNavigationBarType.shifting,
             items: const <BottomNavigationBarItem>[
@@ -1105,7 +1198,7 @@ class _HomeScreenState extends State<Home> {
                 backgroundColor: Colors.white,
               ),
             ],
-            selectedItemColor: Color(0xff12283D),
+            selectedItemColor: Constants.primary_color,
             iconSize: 40,
             onTap: _onItemTapped,
             elevation: 15),

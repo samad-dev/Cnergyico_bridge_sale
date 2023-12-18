@@ -288,6 +288,7 @@ class _LoginState extends State<Login> {
                                     fontWeight: FontWeight.w700,
                                     fontStyle: FontStyle.normal,
                                     fontSize: 16,
+                                    color: Colors.white
                                   ),
                                 ),
                               ),
