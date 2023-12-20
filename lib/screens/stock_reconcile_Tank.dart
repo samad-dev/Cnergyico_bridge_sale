@@ -6,22 +6,27 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
+import 'Task_Dashboard.dart';
 import 'outlets_list.dart';
 import 'package:intl/intl.dart';
 
 class StockReconcileTankPage extends StatefulWidget {
   final String dealer_id;
+  final String inspectionid;
+  final String dealer_name;
 
-  const StockReconcileTankPage({Key? key, required this.dealer_id}) : super(key: key);
+  const StockReconcileTankPage({Key? key, required this.dealer_id, required this.inspectionid, required this.dealer_name}) : super(key: key);
 
   @override
-  _StockReconcileTankPageState createState() => _StockReconcileTankPageState(dealer_id);
+  _StockReconcileTankPageState createState() => _StockReconcileTankPageState(dealer_id, inspectionid,dealer_name);
 }
 
 class _StockReconcileTankPageState extends State<StockReconcileTankPage> {
   final String dealer_id;
+  final String inspectionid;
+  final String dealer_name;
 
-  _StockReconcileTankPageState(this.dealer_id);
+  _StockReconcileTankPageState(this.dealer_id, this.inspectionid, this.dealer_name);
 
   List<Map<String, dynamic>> filteredData = [];
   List<Map<String, dynamic>> filteredData1 = [];
@@ -84,7 +89,7 @@ class _StockReconcileTankPageState extends State<StockReconcileTankPage> {
     }
   }
 
-  Future<void> sendReconciliationData(String id, String oldReading, String newReading) async {
+  Future<void> sendReconciliationData(int index,String id, String oldReading, String newReading, String product_id) async {
     setState(() {
       isLoading = true; // Show loader
     });
@@ -94,7 +99,7 @@ class _StockReconcileTankPageState extends State<StockReconcileTankPage> {
     var now = DateTime.now();
     var formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
     String formattedDate = formatter.format(now);
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/dealer_tank_dip.php';
+    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/create/dealers_inspection_dip.php';
 
     try {
       final response = await http.post(
@@ -102,19 +107,46 @@ class _StockReconcileTankPageState extends State<StockReconcileTankPage> {
         body: {
           'user_id': '$user_id',
           'dealer_id':dealer_id,
-          'tank_id': '$id',
-          'old_dip': '$oldReading',
-          'dip_input': newReading,
-          'date_time': formattedDate,
-          'dip_description': 'New Dip',
+          'task_id': inspectionid,
+          'old_dip': oldReading,
+          'product_id': product_id,
+          'tank_id': id,
+          'dip_new': newReading,
         },
       );
 
       if (response.statusCode == 200) {
-        // Handle success, if needed
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => Outlets()), // Replace OutletsPage with the actual page you want to navigate to
-        );
+        if(filteredData.length-1 == index){
+          sendstatus();
+        }
+      } else {
+        // Handle errors, if needed
+        print('Failed to send data. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle exceptions, if needed
+      print('Error: $e');
+    }
+  }
+  Future<void> sendstatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var user_id = prefs.getString("Id");
+    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        body: {
+          'task_id':'$inspectionid',
+          'row_id': '',
+          'table_name':'wet_stock_status'
+        },
+      );
+
+      if (response.statusCode == 200) {
         print('Data sent successfully');
+        Navigator.push(context,
+          MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name)),);
         Fluttertoast.showToast(
           msg: 'Data sent successfully',
           toastLength: Toast.LENGTH_SHORT,
@@ -124,9 +156,6 @@ class _StockReconcileTankPageState extends State<StockReconcileTankPage> {
           textColor: Colors.white,
           fontSize: 16.0,
         );
-
-        // You can navigate back to the previous page here if needed
-        // Navigator.of(context).pop();
       } else {
         // Handle errors, if needed
         print('Failed to send data. Status Code: ${response.statusCode}');
@@ -150,9 +179,11 @@ class _StockReconcileTankPageState extends State<StockReconcileTankPage> {
         String newReading = readingControllers[index].text;
 
         sendReconciliationData(
+          index,
           filteredData[index]['id'],
           oldReading,
           newReading,
+          filteredData[index]['product']
         );
       }
     }
@@ -280,7 +311,7 @@ class _StockReconcileTankPageState extends State<StockReconcileTankPage> {
                                       ),
                                     ),
                                     onPressed: () {
-                                      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => StockReconcilePage(dealer_id: dealer_id)));
+                                      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => StockReconcilePage(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name,)));
                                     },
                                   )
                                 ],
@@ -384,13 +415,13 @@ class _StockReconcileTankPageState extends State<StockReconcileTankPage> {
                       }
 
                       final id = filteredData[index2]['id'];
-                      final products = filteredData[index2]["products"];
                       final min_limit = filteredData[index2]["min_limit"];
                       final max_limit = filteredData[index2]["max_limit"];
                       final old_dip = filteredData[index2]["current_dip"];
                       final update_time = filteredData[index2]["update_time"];
                       final created_at = filteredData[index2]["created_at"];
                       final created_by = filteredData[index2]["created_by"];
+                      final product = filteredData[index2]["product"];
                       final name = filteredData[index2]["name"];
 
                       return Padding(

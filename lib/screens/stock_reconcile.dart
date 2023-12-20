@@ -11,17 +11,21 @@ import 'outlets_list.dart';
 
 class StockReconcilePage extends StatefulWidget {
   final String dealer_id;
+  final String inspectionid;
+  final String dealer_name;
 
-  const StockReconcilePage({Key? key, required this.dealer_id}) : super(key: key);
+  const StockReconcilePage({Key? key, required this.dealer_id, required this.inspectionid, required this.dealer_name}) : super(key: key);
 
   @override
-  _StockReconcilePageState createState() => _StockReconcilePageState(dealer_id);
+  _StockReconcilePageState createState() => _StockReconcilePageState(dealer_id,inspectionid,dealer_name);
 }
 
 class _StockReconcilePageState extends State<StockReconcilePage> {
   final String dealer_id;
+  final String inspectionid;
+  final String dealer_name;
 
-  _StockReconcilePageState(this.dealer_id);
+  _StockReconcilePageState(this.dealer_id,this.inspectionid, this.dealer_name);
 
   List<Map<String, dynamic>> filteredData = [];
   List<Map<String, dynamic>> filteredData1 = [];
@@ -83,7 +87,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
       throw Exception('Failed to load data');
     }
   }
-  Future<void> sendReconciliationData(String id, String oldReading, String newReading, String product) async {
+  Future<void> sendReconciliationData(int index,String id, String oldReading, String newReading, String product) async {
     setState(() {
       isLoading = true; // Show loader
     });
@@ -97,19 +101,48 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
         Uri.parse(apiUrl),
         body: {
           'user_id': '$user_id',
-          'nozle_id': '$id',
-          'product_id': '$product',
+          'nozle_id': id,
+          'product_id': product,
           'old_reading': oldReading.isNotEmpty ? oldReading : '0',
           'new_reading': newReading,
           'row_id': '',
+          'task_id':inspectionid,
+          'dealer_id':dealer_id,
         },
       );
 
       if (response.statusCode == 200) {
-        // Handle success, if needed
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => TaskDashboard()), // Replace OutletsPage with the actual page you want to navigate to
-        );
+        if(filteredData.length-1 == index){
+          sendstatus();
+        }
+      } else {
+        // Handle errors, if needed
+        print('Failed to send data. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle exceptions, if needed
+      print('Error: $e');
+    }
+  }
+  Future<void> sendstatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var user_id = prefs.getString("Id");
+    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        body: {
+          'task_id':'$inspectionid',
+          'row_id': '',
+          'table_name':'dispensing_status'
+        },
+      );
+
+      if (response.statusCode == 200) {
         print('Data sent successfully');
+        Navigator.push(context,
+          MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name)),);
         Fluttertoast.showToast(
           msg: 'Data sent successfully',
           toastLength: Toast.LENGTH_SHORT,
@@ -119,9 +152,6 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
           textColor: Colors.white,
           fontSize: 16.0,
         );
-
-        // You can navigate back to the previous page here if needed
-        // Navigator.of(context).pop();
       } else {
         // Handle errors, if needed
         print('Failed to send data. Status Code: ${response.statusCode}');
@@ -175,6 +205,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
           String newReading = readingControllers[index].text;
 
           sendReconciliationData(
+            index,
             filteredData[index]['id'],
             oldReading,
             newReading,
@@ -383,7 +414,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
                                       ),
                                     ),
                                     onPressed: () {
-                                      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => StockReconcileTankPage(dealer_id: dealer_id)));
+                                      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => StockReconcileTankPage(dealer_id: dealer_id,inspectionid: inspectionid, dealer_name: dealer_name,)));
                                     },
                                   )
                                 ],

@@ -11,20 +11,66 @@ import 'outlets_list.dart';
 
 class MPricing extends StatefulWidget {
   final String dealer_id;
-  const MPricing({Key? key, required this.dealer_id}) : super(key: key);
+  final String inspectionid;
+  final String dealer_name;
+  const MPricing({Key? key, required this.dealer_id,required this.inspectionid, required this.dealer_name}) : super(key: key);
   @override
-  MPricingState createState() => MPricingState(dealer_id);
+  MPricingState createState() => MPricingState(dealer_id,inspectionid,dealer_name);
 }
 
 class MPricingState extends State<MPricing> {
   final String dealer_id;
+  final String inspectionid;
+  final String dealer_name;
 
-  MPricingState(this.dealer_id);
+  MPricingState(this.dealer_id, this.inspectionid, this.dealer_name);
   
   List<TextEditingController> readingControllers = [];
   bool isLoading = false;
   List<Map<String, dynamic>> filteredData = [];
   List<String> variancesList = [];
+
+  Future<void> sendstatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var user_id = prefs.getString("Id");
+    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        body: {
+          'task_id':'$inspectionid',
+          'row_id': '',
+          'table_name':'measurement_status'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print('Data sent successfully');
+        Navigator.push(context,
+          MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name)),);
+        Fluttertoast.showToast(
+          msg: 'Data sent successfully',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      } else {
+        // Handle errors, if needed
+        print('Failed to send data. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle exceptions, if needed
+      print('Error: $e');
+    } finally {
+      setState(() {
+        isLoading = false; // Hide loader
+      });
+    }
+  }
 
 
   @override
@@ -377,7 +423,9 @@ class MPricingState extends State<MPricing> {
                   ),
                   onPressed: isLoading
                       ? null // Disable button while loading
-                      : () {},
+                      : () {
+                    sendstatus();
+                  },
                   child: isLoading
                       ? CircularProgressIndicator() // Show loader
                       : Text('Submit',style: TextStyle(color: Colors.white),),

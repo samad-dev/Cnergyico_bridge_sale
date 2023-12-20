@@ -1,12 +1,22 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:hascol_inspection/screens/Measurement&Pricing.dart';
 import 'package:hascol_inspection/screens/StockVariation.dart';
 import 'package:hascol_inspection/screens/stock_reconcile.dart';
 import 'package:hascol_inspection/screens/stock_reconcile_Tank.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:signature/signature.dart';
 import '../utils/constants.dart';
 import 'SalesPerformance.dart';
+import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'home.dart';
 import 'inspection.dart';
 
 
@@ -35,6 +45,8 @@ class TaskDashboardState extends State<TaskDashboard> {
   List<Map<String, String>> resultList = [];
   int zeroCount = 0;
   int oneCount = 0;
+  TextEditingController commentController = TextEditingController();
+  late String signatureImagePath;
 
   Future<List<Map<String, String>>> fetchData(String dealerId) async {
     final apiUrl =
@@ -62,6 +74,53 @@ class TaskDashboardState extends State<TaskDashboard> {
       return resultList;
     } else {
       throw Exception('Failed to load data');
+    }
+  }
+  Future<void> postSignatureImages(String dealerSignaturePath, String representerSignaturePath) async {
+    String apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/task_response.php';
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Use null-aware operator to provide a default value if 'Id' is null
+    var id = prefs.getString("Id") ?? '';
+
+    try {
+      // Create a multipart request
+      var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+
+      // Add the dealer signature image file
+      request.files.add(await http.MultipartFile.fromPath('dealer_sign', dealerSignaturePath));
+
+      // Add the representer signature image file
+      request.files.add(await http.MultipartFile.fromPath('representator_sign', dealerSignaturePath));
+
+      // Add the postData fields
+      request.fields.addAll({
+        'user_id': id,
+        'task_id': widget.inspectionid ?? '', // Provide a default value if null
+        'row_id': '',
+        'status': '1',
+        'description': commentController.text.toString(),
+      });
+
+      // Send the request
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        print('Signatures and postData posted successfully');
+        Fluttertoast.showToast(
+          msg: 'Data sent successfully',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      } else {
+        print('Failed to post signatures and postData. Error: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Exception while posting signatures and postData: $error');
     }
   }
 
@@ -270,7 +329,7 @@ class TaskDashboardState extends State<TaskDashboard> {
                                       print('Measurement Status is 1, action not allowed');
                                     }
                                     else {
-                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => SalesPerformance(dealer_id: dealer_id,)));
+                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => SalesPerformance(dealer_id: dealer_id,inspectionid: inspectionid!,dealer_name: dealer_name!,)));
                                     }
                                     },
                                   child: Card(
@@ -333,7 +392,7 @@ class TaskDashboardState extends State<TaskDashboard> {
                                       print('Measurement Status is 1, action not allowed');
                                     } else {
                                       // Measurement Status is not 1, navigate to MPricing
-                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => MPricing(dealer_id: dealer_id),));
+                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => MPricing(dealer_id: dealer_id,inspectionid: inspectionid!,dealer_name: dealer_name!,),));
                                     }
                                   },
                                   child: Card(
@@ -400,7 +459,7 @@ class TaskDashboardState extends State<TaskDashboard> {
                                       print('Measurement Status is 1, action not allowed');
                                     }
                                     else {
-                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => StockReconcileTankPage(dealer_id: dealer_id,)));
+                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => StockReconcileTankPage(dealer_id: dealer_id,inspectionid: inspectionid!,dealer_name: dealer_name!)));
                                     }
                                     },
                                   child: Card(
@@ -464,7 +523,7 @@ class TaskDashboardState extends State<TaskDashboard> {
                                     else {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (context) => StockReconcilePage(dealer_id:dealer_id)),
+                                        MaterialPageRoute(builder: (context) => StockReconcilePage(dealer_id: dealer_id,inspectionid: inspectionid!,dealer_name: dealer_name!)),
                                       );
                                     }
                                     },
@@ -570,7 +629,7 @@ class TaskDashboardState extends State<TaskDashboard> {
                                     else {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (context) =>  StockVariation(dealer_id:dealer_id)),
+                                        MaterialPageRoute(builder: (context) =>  StockVariation(dealer_id: dealer_id,inspectionid: inspectionid!,dealer_name: dealer_name!)),
                                       );
                                     }
 
@@ -585,7 +644,7 @@ class TaskDashboardState extends State<TaskDashboard> {
                                     }
                                     else {
                                       Navigator.push(context,
-                                        MaterialPageRoute(builder: (context) => Inspection(dealer_id: dealer_id,inspectionid: inspectionid)),);
+                                        MaterialPageRoute(builder: (context) => Inspection(dealer_id: dealer_id,inspectionid: inspectionid!,dealer_name: dealer_name!)),);
                                     }
                                   },
                                   child: Card(
@@ -633,7 +692,117 @@ class TaskDashboardState extends State<TaskDashboard> {
                             width: MediaQuery.of(context).size.width/1.8, // Half of the screen width
                             height: 45,
                             child: TextButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                if (oneCount == 6) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      SignatureController _controller = SignatureController(
+                                        penStrokeWidth: 5,
+                                        penColor: Colors.black,
+                                        exportBackgroundColor: Colors.white,
+                                      );
+                                      return AlertDialog(
+                                        title: Text('Conclusion'),
+                                        content: Container(
+                                          height: MediaQuery.of(context).size.width/1.2,
+                                          width: MediaQuery.of(context).size.width,
+                                          child: Column(
+                                            children: [
+                                              TextField(
+                                                controller: commentController,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Description',
+                                                  border: OutlineInputBorder(
+                                                    borderRadius: BorderRadius.circular(20.0),
+                                                  ),
+                                                ),
+                                                maxLines: 2,
+                                                minLines: 1,
+                                              ),
+                                              SizedBox(height: 20),
+                                              Row(
+                                                children: [
+                                                  Text('Dealer Signature:'),
+                                                ],
+                                              ),
+                                              SizedBox(height: 10),
+                                              Container(
+                                                height: MediaQuery.of(context).size.width/2, // Adjust the height as needed
+                                                child: Signature(
+                                                  controller: _controller,
+                                                  height: 200, // Adjust the height as needed
+                                                  width: MediaQuery.of(context).size.width,
+                                                  backgroundColor: Colors.grey,
+                                                ),
+                                              ),
+
+                                            ],
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              _controller.clear();
+                                            },
+                                            child: Text('Clear'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () async {
+                                              // Get the cache directory
+                                              final directory = await getTemporaryDirectory();
+                                              // Generate a unique file name
+                                              final fileName = 'signature_${DateTime.now().millisecondsSinceEpoch}.png';
+                                              // Combine the directory path and file name
+                                              final filePath = '${directory.path}/$fileName';
+                                              // Convert the signature to an image
+                                              final Uint8List? pngBytes = await _controller.toPngBytes();
+                                              if (pngBytes != null) {
+                                                final img.Image? image = img.decodePng(pngBytes);
+                                                // Save the image to the cache directory
+                                                File(filePath).writeAsBytesSync(img.encodePng(image!));
+                                                // Store the file path in the variable
+                                                setState(() {
+                                                  signatureImagePath = filePath;
+                                                });
+                                                print('Image path: $signatureImagePath');
+                                                await postSignatureImages(signatureImagePath, signatureImagePath);
+                                                Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
+                                              }
+                                            },
+                                            child: Text('Submit'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                }
+                                else {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        content: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text('Please fill all form.'),
+                                            SizedBox(height: 10),
+                                          ],
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: Text('OK'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                }
+                              },
                               style: TextButton.styleFrom(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(45.0), // Adjust the value for curved border

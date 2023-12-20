@@ -11,15 +11,20 @@ import 'outlets_list.dart';
 
 class StockVariation extends StatefulWidget {
   final String dealer_id;
-  const StockVariation({Key? key, required this.dealer_id}) : super(key: key);
+  final String inspectionid;
+  final String dealer_name;
+
+  const StockVariation({Key? key, required this.dealer_id, required this.inspectionid, required this.dealer_name}) : super(key: key);
   @override
-  StockVariationState createState() => StockVariationState(dealer_id);
+  StockVariationState createState() => StockVariationState(dealer_id,inspectionid,dealer_name);
 }
 
 class StockVariationState extends State<StockVariation> {
   final String dealer_id;
+  final String inspectionid;
+  final String dealer_name;
 
-  StockVariationState(this.dealer_id);
+  StockVariationState(this.dealer_id, this.inspectionid, this.dealer_name);
   
   List<TextEditingController> readingControllers = [];
   bool isLoading = false;
@@ -56,8 +61,8 @@ class StockVariationState extends State<StockVariation> {
         Uri.parse(apiUrl),
         body: {
           'user_id': '$user_id',
-          'dealer_id': '$dealer_id',
-          'product_id': '$product_id',
+          'dealer_id': dealer_id,
+          'product_id': product_id,
           'row_id': '',
           'opening_stock':'${numbers[0]}',
           'purchase_during_inspection_period':'${numbers[1]}',
@@ -66,13 +71,39 @@ class StockVariationState extends State<StockVariation> {
           'book_stock':'$book_stock',
           'current_physical_stock':'${numbers[5]}',
           'gain_loss':'$gain_loss',
+          'task_id':inspectionid
         },
       );
 
       if (response.statusCode == 200) {
-        // Handle success, if needed
-        Navigator.pop(context, TaskDashboard());
+      } else {
+        // Handle errors, if needed
+        print('Failed to send data. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle exceptions, if needed
+      print('Error: $e');
+    }
+  }
+  Future<void> sendstatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var user_id = prefs.getString("Id");
+    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        body: {
+          'task_id':'$inspectionid',
+          'row_id': '',
+          'table_name':'stock_variations_status'
+        },
+      );
+
+      if (response.statusCode == 200) {
         print('Data sent successfully');
+        Navigator.push(context,
+          MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name)),);
         Fluttertoast.showToast(
           msg: 'Data sent successfully',
           toastLength: Toast.LENGTH_SHORT,
@@ -82,9 +113,6 @@ class StockVariationState extends State<StockVariation> {
           textColor: Colors.white,
           fontSize: 16.0,
         );
-
-        // You can navigate back to the previous page here if needed
-        // Navigator.of(context).pop();
       } else {
         // Handle errors, if needed
         print('Failed to send data. Status Code: ${response.statusCode}');
@@ -98,16 +126,16 @@ class StockVariationState extends State<StockVariation> {
       });
     }
   }
-
-  void printReadingControllersValues() {
+  Future<void> printReadingControllersValues() async {
       if (hasHSD)
-        DealerStockVariations(
+        await DealerStockVariations(
           hsdValues, HSDID
         );
       if (hasPMG)
-        DealerStockVariations(
+        await DealerStockVariations(
             pmgValues, PMGID
         );
+      sendstatus();
   }
 
   Future<List<Map<String, dynamic>>> TargetSales(String dealerId) async {

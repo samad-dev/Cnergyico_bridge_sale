@@ -14,6 +14,7 @@ import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 
 import '../utils/constants.dart';
+import 'Task_Dashboard.dart';
 import 'home.dart';
 
 class CaseData {
@@ -37,8 +38,9 @@ class CaseData {
 class Inspection extends StatefulWidget {
   final String? dealer_id;
   final String? inspectionid;
+  final String? dealer_name;
 
-  const Inspection({Key? key, this.dealer_id, this.inspectionid}) : super(key: key);
+  const Inspection({Key? key, this.dealer_id, this.inspectionid,this.dealer_name}) : super(key: key);
 
   @override
   _InspectionState createState() => _InspectionState();
@@ -57,7 +59,43 @@ class _InspectionState extends State<Inspection> {
     super.initState();
     fetchData();
   }
+  Future<void> sendstatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var user_id = prefs.getString("Id");
+    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
 
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        body: {
+          'task_id':widget.inspectionid,
+          'row_id': '',
+          'table_name':'inspection'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print('Data sent successfully');
+        Navigator.push(context,
+          MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: widget.dealer_id,inspectionid: widget.inspectionid,dealer_name: widget.dealer_name)),);
+        Fluttertoast.showToast(
+          msg: 'Data sent successfully',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      } else {
+        // Handle errors, if needed
+        print('Failed to send data. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle exceptions, if needed
+      print('Error: $e');
+    }
+  }
   Future<void> fetchData() async {
     final response = await http.get(Uri.parse(
         'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_servey_data.php?key=03201232927'));
@@ -344,12 +382,9 @@ class _InspectionState extends State<Inspection> {
       // Post data
       await postSurveyData();
       await postImages(postedDataList,imagesToPost);
-      await postSignatureImages(signatureImagePath, signatureImagePath);
+      sendstatus();
 
-      // Close loader
-      Navigator.pop(context);
-
-      // Show success toast
+      /*
       Fluttertoast.showToast(
         msg: 'Inspection sent successfully',
         toastLength: Toast.LENGTH_SHORT,
@@ -359,16 +394,9 @@ class _InspectionState extends State<Inspection> {
         textColor: Colors.white,
         fontSize: 16.0,
       );
-
-      // Navigate to homepage
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => Home()),
-      );
+      */
     } catch (error) {
       print('Error while posting data: $error');
-      // Close loader
-      Navigator.pop(context);
-      // Show error toast
       Fluttertoast.showToast(
         msg: 'Failed to send inspection. Please try again.',
         toastLength: Toast.LENGTH_SHORT,
@@ -399,7 +427,6 @@ class _InspectionState extends State<Inspection> {
         });
       }
     }
-
     return unansweredQuestions.isEmpty;
   }
   Future<void> postSignatureImages(String dealerSignaturePath, String representerSignaturePath) async {
@@ -485,6 +512,8 @@ class _InspectionState extends State<Inspection> {
         onPressed: () {
           List<Map<String, dynamic>> unansweredQuestions = [];
           if (validateResponses(unansweredQuestions)) {
+            printData();
+            /*
             showDialog(
               context: context,
               builder: (BuildContext context) {
@@ -540,6 +569,7 @@ class _InspectionState extends State<Inspection> {
                         ),
                     TextButton(
                       onPressed: () async {
+                        /*
                         // Get the cache directory
                         final directory = await getTemporaryDirectory();
                         // Generate a unique file name
@@ -557,9 +587,10 @@ class _InspectionState extends State<Inspection> {
                           signatureImagePath = filePath;
                           });
                           print('Image path: $signatureImagePath');
+                         */
                           Navigator.pop(context);
                           printData();
-                        }
+                        //}
                       },
                       child: Text('Submit'),
                     ),
@@ -567,7 +598,9 @@ class _InspectionState extends State<Inspection> {
                 );
               },
             );
-          } else {
+            */
+          }
+          else {
             showDialog(
               context: context,
               builder: (BuildContext context) {

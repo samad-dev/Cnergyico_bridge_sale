@@ -11,15 +11,19 @@ import 'outlets_list.dart';
 
 class SalesPerformance extends StatefulWidget {
   final String dealer_id;
-  const SalesPerformance({Key? key, required this.dealer_id}) : super(key: key);
+  final String inspectionid;
+  final String dealer_name;
+  const SalesPerformance({Key? key, required this.dealer_id, required this.inspectionid, required this.dealer_name}) : super(key: key);
   @override
-  SalesPerformanceState createState() => SalesPerformanceState(dealer_id);
+  SalesPerformanceState createState() => SalesPerformanceState(dealer_id, inspectionid,dealer_name);
 }
 
 class SalesPerformanceState extends State<SalesPerformance> {
   final String dealer_id;
+  final String inspectionid;
+  final String dealer_name;
 
-  SalesPerformanceState(this.dealer_id);
+  SalesPerformanceState(this.dealer_id, this.inspectionid, this.dealer_name);
   
   List<TextEditingController> readingControllers = [];
   bool isLoading = false;
@@ -32,8 +36,49 @@ class SalesPerformanceState extends State<SalesPerformance> {
     super.initState();
     TargetSales(dealer_id);
   }
+  Future<void> sendstatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var user_id = prefs.getString("Id");
+    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
 
-  Future<void> sendSalesPerformance(String product_id, String monthly_target, String target_achived, String difference, String description) async {
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        body: {
+          'task_id':'$inspectionid',
+          'row_id': '',
+          'table_name':'sales_status'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print('Data sent successfully');
+        Navigator.push(context,
+          MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name)),);
+          Fluttertoast.showToast(
+            msg: 'Data sent successfully',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+      } else {
+        // Handle errors, if needed
+        print('Failed to send data. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle exceptions, if needed
+      print('Error: $e');
+    } finally {
+      setState(() {
+        isLoading = false; // Hide loader
+      });
+    }
+  }
+
+  Future<void> sendSalesPerformance(int index, String product_id, String monthly_target, String target_achived, String difference, String description) async {
     setState(() {
       isLoading = true; // Show loader
     });
@@ -54,25 +99,14 @@ class SalesPerformanceState extends State<SalesPerformance> {
           'target_achived':'$target_achived',
           'differnce':'$difference',
           'reason':'$description',
+          'task_id':'$inspectionid'
         },
       );
 
       if (response.statusCode == 200) {
-        // Handle success, if needed
-        Navigator.pop(context, TaskDashboard());
-        print('Data sent successfully');
-        Fluttertoast.showToast(
-          msg: 'Data sent successfully',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-
-        // You can navigate back to the previous page here if needed
-        // Navigator.of(context).pop();
+        if(filteredData.length-1 == index){
+          sendstatus();
+        }
       } else {
         // Handle errors, if needed
         print('Failed to send data. Status Code: ${response.statusCode}');
@@ -80,31 +114,26 @@ class SalesPerformanceState extends State<SalesPerformance> {
     } catch (e) {
       // Handle exceptions, if needed
       print('Error: $e');
-    } finally {
-      setState(() {
-        isLoading = false; // Hide loader
-      });
     }
   }
-
   void printReadingControllersValues() {
     for (int index = 0; index < filteredData.length; index++) {
       String description = readingControllers[index] != null
           ? readingControllers[index].text
           : ' ';
-      String Variances = "${int.parse(filteredData[index]["total_sum_target"]) - int.parse(filteredData[index]['target_amount'])}";
-
+      final total_sum_target = filteredData[index]["total_sum_target"] ?? "0";
+      String Variances = "${int.parse(total_sum_target) - int.parse(filteredData[index]['target_amount'])}";
 
       sendSalesPerformance(
+        index,
         filteredData[index]['product_id'],
         filteredData[index]['target_amount'],
-        filteredData[index]["total_sum_target"],
+        total_sum_target,
         Variances,
         description,
       );
     }
   }
-
   Future<List<Map<String, dynamic>>> TargetSales(String dealerId) async {
     final apiUrl =
         'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_dealer_monthly_target.php?key=03201232927&dealer_id=$dealerId';
@@ -175,7 +204,7 @@ class SalesPerformanceState extends State<SalesPerformance> {
                       final created_by = filteredData[index2]["created_by"];
                       final description = filteredData[index2]["description"];
                       final name = filteredData[index2]["name"];
-                      final total_sum_target = filteredData[index2]["total_sum_target"];
+                      final total_sum_target = filteredData[index2]["total_sum_target"] ?? "0";
                       controller.addListener(() {
                         print("Updated reason for variation: ${controller.text}");
                         filteredData[index2]['reason_for_variation'] = controller.text;
