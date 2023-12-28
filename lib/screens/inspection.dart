@@ -22,7 +22,8 @@ class CaseData {
   String title;
   List<String> questionIds;
   List<String> questions;
-  List<bool?> responses;
+  List<String?> responses;
+  List<String?> comments;
   List<List<String>> imagePaths;
 
   CaseData({
@@ -31,6 +32,7 @@ class CaseData {
     required this.title,
     required this.questions,
     required this.responses,
+    required this.comments,
     required this.imagePaths,
   });
 }
@@ -59,43 +61,232 @@ class _InspectionState extends State<Inspection> {
     super.initState();
     fetchData();
   }
-  Future<void> sendstatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var user_id = prefs.getString("Id");
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
-
-    try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        body: {
-          'task_id':widget.inspectionid,
-          'row_id': '',
-          'table_name':'inspection'
-        },
-      );
-
-      if (response.statusCode == 200) {
-        print('Data sent successfully');
-        Navigator.push(context,
-          MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: widget.dealer_id,inspectionid: widget.inspectionid,dealer_name: widget.dealer_name)),);
-        Fluttertoast.showToast(
-          msg: 'Data sent successfully',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-      } else {
-        // Handle errors, if needed
-        print('Failed to send data. Status Code: ${response.statusCode}');
+  void printAllComments() {
+    for (var caseData in cases) {
+      print('Comments for ${caseData.title}:');
+      for (int i = 0; i < caseData.comments.length; i++) {
+        print('Question ${i + 1}: ${caseData.comments[i]}');
       }
-    } catch (e) {
-      // Handle exceptions, if needed
-      print('Error: $e');
+      print('----------------------');
     }
   }
+  void showUnansweredQuestionsSlider(List<Map<String, dynamic>> unansweredQuestions) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        int id=0;
+        return AlertDialog(
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Please answer all the questions before submitting.'),
+              SizedBox(height: 10),
+              Text('Unanswered Questions:'),
+              for (var unanswered in unansweredQuestions)
+                Text(
+                  '${unanswered['stepperName']}: ${unanswered['questions'].map((q) => 'Q$q').join(', ')}',
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                int totalSections = cases.length;
+                print('Total Number of Sections: $totalSections');
+                showSlider(unansweredQuestions);
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  void showSlider(List<Map<String, dynamic>> unansweredQuestions) {
+    int sliderIndex = 0;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dialog dismissal on outside tap
+      builder: (BuildContext context) {
+        return WillPopScope(
+          onWillPop: () async {
+            // Disable the back button
+            return false;
+          },
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                content: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Unanswered Questions:'),
+                      Slider(
+                        value: sliderIndex.toDouble(),
+                        onChanged: (double value) {
+                          setState(() {
+                            sliderIndex = value.toInt();
+                          });
+                        },
+                        min: 0,
+                        max: (unansweredQuestions.length - 1).toDouble(),
+                        divisions: unansweredQuestions.length - 1,
+                      ),
+                      Text(
+                        'Section: ${unansweredQuestions[sliderIndex]['stepperName']}',
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: List.generate(
+                          unansweredQuestions[sliderIndex]['questions'].length,
+                              (index) {
+                            final questionNumber = unansweredQuestions[sliderIndex]['questions'][index];
+                            final questionText = unansweredQuestions[sliderIndex]['questionswhat'][questionNumber - 1];
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Question Number: Q$questionNumber',
+                                ),
+                                Text(
+                                  'Question: $questionText',
+                                ),
+                                ResponseWidgets(
+                                  caseData: cases[unansweredQuestions[sliderIndex]['index']],
+                                  questionIndex: questionNumber - 1,
+                                  onChanged: (String? value) {
+                                    updateResponse(cases[unansweredQuestions[sliderIndex]['index']], questionNumber - 1, value);
+                                    // Update the UI in real-time
+                                    setState(() {});
+                                  },
+                                ),
+                                if (valueIsNo(cases[unansweredQuestions[sliderIndex]['index']], questionNumber - 1))
+                                  GestureDetector(
+                                    onTap: () async {
+                                      print('Camera button tapped');
+                                      final imageFile = await getImage();
+                                      if (imageFile != null) {
+                                        print('Image captured. Path: ${imageFile.path}');
+                                        saveImageDetails(
+                                          cases[unansweredQuestions[sliderIndex]['index']].id,
+                                          cases[unansweredQuestions[sliderIndex]['index']].questionIds[questionNumber - 1],
+                                          imageFile.path,
+                                        );
+                                        // Update the UI in real-time
+                                        setState(() {});
+                                      } else {
+                                        print('Image capture canceled or failed.');
+                                      }
+                                    },
+                                    child: Icon(Icons.camera_alt),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        if (sliderIndex > 0) {
+                          // Move to the previous section
+                          sliderIndex--;
+                        }
+                      });
+                    },
+                    child: Text('Back'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (validateCurrentPage(sliderIndex,unansweredQuestions)) {
+                        setState(() {
+                          if (sliderIndex < unansweredQuestions.length - 1) {
+                            // Move to the next section
+                            sliderIndex++;
+                          } else {
+                            // Submit the form
+                            Navigator.pop(context);
+                            // You can add your submission logic here
+                            // e.g., postSurveyData();
+                          }
+                        });
+                      } else {
+                        // Show a message if questions are unanswered
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('Incomplete Answers'),
+                              content: Text('Please answer all questions on this page before moving to the next section.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Text('OK'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+                        // Change the background color based on the completion of the current page
+                        return validateCurrentPage(sliderIndex,unansweredQuestions) ? Constants.secondary_color : Colors.grey;
+                      }),
+                      foregroundColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+                        // Change the text color based on the completion of the current page
+                        return validateCurrentPage(sliderIndex,unansweredQuestions) ? Colors.white : Colors.black;
+                      }),
+                    ),
+                    child: Text(sliderIndex < unansweredQuestions.length - 1 ? 'Next' : 'Submit'),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+  bool validateResponses(List<Map<String, dynamic>> unansweredQuestions) {
+    unansweredQuestions.clear();
+
+    for (var i = 0; i < cases.length; i++) {
+      var caseData = cases[i];
+
+      if (caseData.responses.contains(null)) {
+        var unansweredQuestionNumbers = [];
+        for (var j = 0; j < caseData.responses.length; j++) {
+          if (caseData.responses[j] == null) {
+            unansweredQuestionNumbers.add(j + 1);
+          }
+        }
+        unansweredQuestions.add({
+          'index': i,
+          'stepperName': caseData.title,
+          'questions': unansweredQuestionNumbers,
+          'questionswhat':caseData.questions,
+        });
+      }
+    }
+    return unansweredQuestions.isEmpty;
+  }
+  bool validateCurrentPage(int sliderIndex, List<Map<String, dynamic>> unansweredQuestions,) {
+    var caseData = cases[unansweredQuestions[sliderIndex]['index']];
+    return !caseData.responses.contains(null);
+  }
+
   Future<void> fetchData() async {
     final response = await http.get(Uri.parse(
         'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_servey_data.php?key=03201232927'));
@@ -114,7 +305,11 @@ class _InspectionState extends State<Inspection> {
             questionIds: (category['Questions'] as List)
                 .map((question) => question['id'] as String)
                 .toList(),
-            responses: List<bool?>.filled(
+            responses: List<String?>.filled(
+              (category['Questions'] as List).length,
+              null,
+            ),
+            comments: List<String?>.filled(
               (category['Questions'] as List).length,
               null,
             ),
@@ -144,9 +339,17 @@ class _InspectionState extends State<Inspection> {
       jsonDataList.add({
         caseData.id: List.generate(
           caseData.questionIds.length,
-              (index) => {
-            '${caseData.questionIds[index]}':
-            caseData.responses[index] == true ? 'Yes' : 'No'
+              (index) {
+            final questionId = caseData.questionIds[index];
+            final response = caseData.responses[index] == true.toString() ? 'Yes' : caseData.responses[index] == false.toString() ? 'No' : 'N/A';
+            final comment = caseData.comments[index];
+
+            return {
+              '$questionId': {
+                'response': response,
+                'comment': comment,
+              },
+            };
           },
         ),
       });
@@ -161,13 +364,16 @@ class _InspectionState extends State<Inspection> {
       final response = await http.post(Uri.parse(apiUrl), body: postData);
       if (response.statusCode == 200) {
         print('Data posted successfully');
+        print("print my jason: ${jsonDataList}");
       } else {
         print('Failed to post data. Error: ${response.statusCode}');
+        print("print my jason: ${jsonDataList}");
       }
     } catch (error) {
       print('Exception while posting data: $error');
     }
   }
+
   Future<PickedFile?> getImage() async {
     try {
       final pickedFile =
@@ -180,33 +386,49 @@ class _InspectionState extends State<Inspection> {
   }
   Future<void> saveImageDetails(String categoryId, String questionId, String imagePath) async {
     print('Active Step: ${activeStep}');
-    CaseData caseData = cases[activeStep];
-    caseData.imagePaths[activeStep].add(imagePath);
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var id = prefs.getString("Id");
 
-    // Prepare data for post request
-    final Map<String, dynamic> postData = {
-      'user_id': id, // Replace with your actual user_id
-      'category_id': categoryId,
-      'question_id': questionId,
-      'dealer_id': widget.dealer_id,
-      'inspection_id': widget.inspectionid,
+    if (activeStep >= 0 && activeStep < cases.length) {
+      CaseData caseData = cases[activeStep];
 
-    };
+      // Make sure the index is within bounds
+      if (activeStep < caseData.imagePaths.length) {
+        caseData.imagePaths[activeStep].add(imagePath);
+      } else {
+        print('Invalid activeStep index for imagePaths: $activeStep');
+      }
 
-    // Add the index of this postData in the postedDataList
-    int index = postedDataList.length;
-    postedDataList.add(postData);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      var id = prefs.getString("Id");
 
-    // Save the image path along with the postData index
-    imagesToPost.add({
-      'index': index,
-      'file_path': imagePath,
-    });
+      // Prepare data for post request
+      final Map<String, dynamic> postData = {
+        'user_id': id, // Replace with your actual user_id
+        'category_id': categoryId,
+        'question_id': questionId,
+        'dealer_id': widget.dealer_id,
+        'inspection_id': widget.inspectionid,
+      };
 
-    print(postedDataList);
-    print(imagesToPost);
+      // Add the index of this postData in the postedDataList
+      int index = postedDataList.length;
+      postedDataList.add(postData);
+
+      // Save the image path along with the postData index
+      imagesToPost.add({
+        'index': index,
+        'file_path': imagePath,
+      });
+
+      print("hellow123 $postedDataList");
+      print("hellow123 $imagesToPost");
+    } else {
+      print('Invalid activeStep: $activeStep');
+
+      // Set activeStep to the last valid index
+      activeStep = cases.length - 1;
+
+      // You may want to update the UI or show a message to the user
+    }
   }
   Future<void> postImages(List<Map<String, dynamic>> postDataList, List<Map<String, dynamic>> imagesToPost) async {
     String apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/create/survey_detail_files.php';
@@ -243,7 +465,12 @@ class _InspectionState extends State<Inspection> {
   }
 
   Widget _icon(int index, {required CaseData caseData}) {
+    if (activeStep < 0 || activeStep >= cases.length) {
+      activeStep = cases.length;
+    }
+
     String question = caseData.questions[index];
+    TextEditingController commentController = TextEditingController();
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -268,7 +495,7 @@ class _InspectionState extends State<Inspection> {
                 ResponseWidgets(
                   caseData: caseData,
                   questionIndex: index,
-                  onChanged: (bool? value) {
+                  onChanged: (String? value) {
                     updateResponse(caseData, index, value);
                   },
                 ),
@@ -284,12 +511,30 @@ class _InspectionState extends State<Inspection> {
                           caseData.questionIds[index],
                           imageFile.path,
                         );
+                        // Update the UI in real-time
+                        setState(() {});
                       } else {
                         print('Image capture canceled or failed.');
                       }
                     },
                     child: Icon(Icons.camera_alt),
                   ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: commentController,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your comments...',
+                    ),
+                    onChanged: (value) {
+                      caseData.comments[index] = value;
+                    },
+                  ),
+                ),
               ],
             )
           ],
@@ -298,7 +543,7 @@ class _InspectionState extends State<Inspection> {
     );
   }
   bool valueIsNo(CaseData caseData, int questionIndex) {
-    return caseData.responses[questionIndex] == false;
+    return caseData.responses[questionIndex] == false.toString();
   }
   Widget CaseWidget(BuildContext context, CaseData caseData) {
     return Expanded(
@@ -348,21 +593,66 @@ class _InspectionState extends State<Inspection> {
       ),
     );
   }
-  void updateResponse(CaseData caseData, int questionIndex, bool? value) {
+  void updateResponse(CaseData caseData, int questionIndex, String? value) {
     setState(() {
       caseData.responses[questionIndex] = value;
     });
   }
-  /* posting data */ Future<void> printData() async {
+  Future<void> sendstatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var user_id = prefs.getString("Id");
+    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        body: {
+          'task_id':widget.inspectionid,
+          'row_id': '',
+          'table_name':'inspection'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print('Data sent successfully');
+        Navigator.push(context,
+          MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: widget.dealer_id,inspectionid: widget.inspectionid,dealer_name: widget.dealer_name)),);
+        Fluttertoast.showToast(
+          msg: 'Data sent successfully',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      } else {
+        // Handle errors, if needed
+        print('Failed to send data. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle exceptions, if needed
+      print('Error: $e');
+    }
+  }
+  Future<void> printData() async {
     List<Map<String, dynamic>> jsonDataList = [];
 
     for (var caseData in cases) {
       jsonDataList.add({
         caseData.id: List.generate(
           caseData.questionIds.length,
-              (index) => {
-            '${caseData.questionIds[index]}':
-            caseData.responses[index] == true ? 'Yes' : 'No'
+              (index) {
+            final questionId = caseData.questionIds[index];
+            final response = caseData.responses[index] == true.toString() ? 'Yes' : caseData.responses[index] == false.toString() ? 'No' : 'N/A';
+            final comment = caseData.comments[index];
+
+            return {
+              '$questionId': {
+                'response': response,
+                'comment': comment,
+              },
+            };
           },
         ),
       });
@@ -381,9 +671,9 @@ class _InspectionState extends State<Inspection> {
 
       // Post data
       await postSurveyData();
-      await postImages(postedDataList,imagesToPost);
-      sendstatus();
-
+      //await postImages(postedDataList,imagesToPost);
+      //sendstatus();
+      print("print my jason: ${jsonDataList}");
       /*
       Fluttertoast.showToast(
         msg: 'Inspection sent successfully',
@@ -408,65 +698,8 @@ class _InspectionState extends State<Inspection> {
       );
     }
   }
-  bool validateResponses(List<Map<String, dynamic>> unansweredQuestions) {
-    unansweredQuestions.clear();
 
-    for (var i = 0; i < cases.length; i++) {
-      var caseData = cases[i];
 
-      if (caseData.responses.contains(null)) {
-        var unansweredQuestionNumbers = [];
-        for (var j = 0; j < caseData.responses.length; j++) {
-          if (caseData.responses[j] == null) {
-            unansweredQuestionNumbers.add(j + 1);
-          }
-        }
-        unansweredQuestions.add({
-          'stepperName': caseData.title,
-          'questions': unansweredQuestionNumbers,
-        });
-      }
-    }
-    return unansweredQuestions.isEmpty;
-  }
-  Future<void> postSignatureImages(String dealerSignaturePath, String representerSignaturePath) async {
-    String apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/task_response.php';
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    // Use null-aware operator to provide a default value if 'Id' is null
-    var id = prefs.getString("Id") ?? '';
-
-    try {
-      // Create a multipart request
-      var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
-
-      // Add the dealer signature image file
-      request.files.add(await http.MultipartFile.fromPath('dealer_sign', dealerSignaturePath));
-
-      // Add the representer signature image file
-      request.files.add(await http.MultipartFile.fromPath('representator_sign', dealerSignaturePath));
-
-      // Add the postData fields
-      request.fields.addAll({
-        'user_id': id,
-        'task_id': widget.inspectionid ?? '', // Provide a default value if null
-        'row_id': '',
-        'status': '1',
-        'description': commentController.text.toString(),
-      });
-
-      // Send the request
-      final response = await request.send();
-
-      if (response.statusCode == 200) {
-        print('Signatures and postData posted successfully');
-      } else {
-        print('Failed to post signatures and postData. Error: ${response.statusCode}');
-      }
-    } catch (error) {
-      print('Exception while posting signatures and postData: $error');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -513,135 +746,19 @@ class _InspectionState extends State<Inspection> {
           List<Map<String, dynamic>> unansweredQuestions = [];
           if (validateResponses(unansweredQuestions)) {
             printData();
-            /*
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                SignatureController _controller = SignatureController(
-                  penStrokeWidth: 5,
-                  penColor: Colors.black,
-                  exportBackgroundColor: Colors.white,
-                );
-                return AlertDialog(
-                  title: Text('Conclusion'),
-                  content: Container(
-                    height: MediaQuery.of(context).size.width/1.2,
-                    width: MediaQuery.of(context).size.width,
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: commentController,
-                          decoration: InputDecoration(
-                            labelText: 'Description',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                            ),
-                          ),
-                          maxLines: 2,
-                          minLines: 1,
-                        ),
-                        SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Text('Dealer Signature:'),
-                          ],
-                        ),
-                        SizedBox(height: 10),
-                        Container(
-                          height: MediaQuery.of(context).size.width/2, // Adjust the height as needed
-                          child: Signature(
-                            controller: _controller,
-                            height: 200, // Adjust the height as needed
-                            width: MediaQuery.of(context).size.width,
-                            backgroundColor: Colors.grey,
-                          ),
-                        ),
-
-                      ],
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                          onPressed: () {
-                            _controller.clear();
-                          },
-                          child: Text('Clear'),
-                        ),
-                    TextButton(
-                      onPressed: () async {
-                        /*
-                        // Get the cache directory
-                        final directory = await getTemporaryDirectory();
-                        // Generate a unique file name
-                        final fileName = 'signature_${DateTime.now().millisecondsSinceEpoch}.png';
-                        // Combine the directory path and file name
-                        final filePath = '${directory.path}/$fileName';
-                        // Convert the signature to an image
-                        final Uint8List? pngBytes = await _controller.toPngBytes();
-                        if (pngBytes != null) {
-                          final img.Image? image = img.decodePng(pngBytes);
-                          // Save the image to the cache directory
-                          File(filePath).writeAsBytesSync(img.encodePng(image!));
-                          // Store the file path in the variable
-                          setState(() {
-                          signatureImagePath = filePath;
-                          });
-                          print('Image path: $signatureImagePath');
-                         */
-                          Navigator.pop(context);
-                          printData();
-                        //}
-                      },
-                      child: Text('Submit'),
-                    ),
-                  ],
-                );
-              },
-            );
-            */
-          }
-          else {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  content: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Please answer all the questions before submitting.'),
-                      SizedBox(height: 10),
-                      Text('Unanswered Questions:'),
-                      for (var unanswered in unansweredQuestions)
-                        Text(
-                          '${unanswered['stepperName']}: ${unanswered['questions'].map((q) => 'Q$q').join(', ')}',
-                        ),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text('OK'),
-                    ),
-                  ],
-                );
-              },
-            );
+          } else {
+            showUnansweredQuestionsSlider(unansweredQuestions);
+            printAllComments();
           }
         },
-
         child: Icon(Icons.send_rounded,color: Colors.white,),
       )
           : null,
     );
   }
-
   Widget header() {
     return headerText();
   }
-
   Widget headerText() {
     if (activeStep >= 0 && activeStep < cases.length) {
       return CaseWidget(context, cases[activeStep]);
@@ -651,10 +768,11 @@ class _InspectionState extends State<Inspection> {
   }
 }
 
+
 class ResponseWidgets extends StatelessWidget {
   final CaseData caseData;
   final int questionIndex;
-  final void Function(bool?) onChanged;
+  final void Function(String?) onChanged; // Explicitly specify String type
 
   const ResponseWidgets({
     required this.caseData,
@@ -669,7 +787,7 @@ class ResponseWidgets extends StatelessWidget {
         Column(
           children: [
             Radio(
-              value: true,
+              value: 'true', // Convert boolean to String
               groupValue: caseData.responses[questionIndex],
               onChanged: onChanged,
             ),
@@ -679,17 +797,29 @@ class ResponseWidgets extends StatelessWidget {
         Column(
           children: [
             Radio(
-              value: false,
+              value: 'false', // Convert boolean to String
               groupValue: caseData.responses[questionIndex],
               onChanged: onChanged,
             ),
             Text('No'),
           ],
         ),
+        Column(
+          children: [
+            Radio(
+              value: 'NA', // Add 'NA' as the third option
+              groupValue: caseData.responses[questionIndex],
+              onChanged: onChanged,
+            ),
+            Text('NA'),
+          ],
+        ),
       ],
     );
   }
 }
+
+
 
 void main() {
   runApp(MaterialApp(

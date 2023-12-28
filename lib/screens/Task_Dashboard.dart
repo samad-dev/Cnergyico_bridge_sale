@@ -39,7 +39,7 @@ class TaskDashboardState extends State<TaskDashboard> {
   @override
   void initState() {
     super.initState();
-    fetchData(dealer_id);
+    fetchData(dealer_id, inspectionid!);
   }
 
   List<Map<String, String>> resultList = [];
@@ -48,7 +48,7 @@ class TaskDashboardState extends State<TaskDashboard> {
   TextEditingController commentController = TextEditingController();
   late String signatureImagePath;
 
-  Future<List<Map<String, String>>> fetchData(String dealerId) async {
+  Future<List<Map<String, String>>> fetchData(String dealerId, String inspectionId) async {
     final apiUrl =
         'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_dealers_inspections.php?key=03201232927&id=$dealerId';
 
@@ -56,21 +56,33 @@ class TaskDashboardState extends State<TaskDashboard> {
 
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
+
       setState(() {
-          resultList.add({
-            'Sales Status': data[0]['sales_status'],
-            'Measurement Status': data[0]['measurement_status'],
-            'Wet Stock Status': data[0]['wet_stock_status'],
-            'Dispensing Status': data[0]['dispensing_status'],
-            'Stock Variations Status': data[0]['stock_variations_status'],
-            'Inspection': data[0]['inspection'],
-          });
-          List<String> keys = resultList[0].keys.cast<String>().toList();
-          oneCount = resultList[0].values.where((value) => value == '1').length;
-          zeroCount= resultList[0].values.where((value) => value == '0').length;
-          print("hellow world: $resultList");
-          print("Number of Status: ${keys.length}");
+        // Clear the resultList before adding new items
+        resultList.clear();
+
+        for (int i = 0; i < data.length; i++) {
+          // Check if the current item's inspection id matches the desired inspectionId
+          if (data[i]['id'] == inspectionId) {
+            resultList.add({
+              'Sales Status': data[i]['sales_status'],
+              'Measurement Status': data[i]['measurement_status'],
+              'Wet Stock Status': data[i]['wet_stock_status'],
+              'Dispensing Status': data[i]['dispensing_status'],
+              'Stock Variations Status': data[i]['stock_variations_status'],
+              'Inspection': data[i]['inspection'],
+            });
+          }
+        }
+
+        List<String> keys = resultList[0].keys.cast<String>().toList();
+        oneCount = resultList[0].values.where((value) => value == '1').length;
+        zeroCount = resultList[0].values.where((value) => value == '0').length;
+        print("Hello world: $resultList");
+        print("Number of Status: ${keys.length}");
+        print("Hello person: $dealer_id, $inspectionid, $dealer_name");
       });
+
       return resultList;
     } else {
       throw Exception('Failed to load data');
@@ -128,7 +140,18 @@ class TaskDashboardState extends State<TaskDashboard> {
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
 
-    return Scaffold(
+    return WillPopScope(
+        onWillPop: () async {
+      // You can handle the back button press here
+      // In this example, we're navigating to the home page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => Home()),
+      );
+      // Return true to prevent the default behavior of popping the current route
+      return true;
+    },
+    child:Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         children: [
@@ -160,8 +183,10 @@ class TaskDashboardState extends State<TaskDashboard> {
                       IconButton(
                         icon: Icon(Icons.arrow_back),
                         onPressed: () {
-                          // Navigate back to the home page
-                          Navigator.pop(context);
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => Home()),
+                          );
                         },
                       ),
                     ],
@@ -639,7 +664,7 @@ class TaskDashboardState extends State<TaskDashboard> {
                               Expanded(
                                 child: GestureDetector(
                                   onTap:(){
-                                    if (resultList.isNotEmpty && resultList[0]['Inspection'] == '1') {
+                                    if (resultList.isNotEmpty && resultList[0]['Inspection'] == '2') {
                                       print('Measurement Status is 1, action not allowed');
                                     }
                                     else {
@@ -830,6 +855,7 @@ class TaskDashboardState extends State<TaskDashboard> {
           ),
         ],
       ),
+    ),
     );
   }
 }

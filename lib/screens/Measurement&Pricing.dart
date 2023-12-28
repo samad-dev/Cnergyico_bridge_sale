@@ -24,12 +24,45 @@ class MPricingState extends State<MPricing> {
   final String dealer_name;
 
   MPricingState(this.dealer_id, this.inspectionid, this.dealer_name);
-  
-  List<TextEditingController> readingControllers = [];
-  bool isLoading = false;
-  List<Map<String, dynamic>> filteredData = [];
-  List<String> variancesList = [];
 
+  final TextEditingController appreciationController = TextEditingController();
+  final TextEditingController measuresController = TextEditingController();
+  final TextEditingController warningController = TextEditingController();
+  final TextEditingController ograPmgController = TextEditingController();
+  final TextEditingController ograHsdController = TextEditingController();
+  final TextEditingController pumpPmgController = TextEditingController();
+  final TextEditingController pumpHsdController = TextEditingController();
+  final TextEditingController variancePmgController = TextEditingController();
+  final TextEditingController varianceHsdController = TextEditingController();
+
+  bool isLoading = false;
+  List<dynamic> dealersData = [];
+  List<Map<String, dynamic>> dispenserDataList = [];
+  int dispenserNum = 0;
+  int nozzelNum = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchData(dealer_id);
+  }
+
+
+
+  Future<void> fetchData(dealer_id) async {
+    final String apiUrl =
+        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/dealers_dispensor_nozles.php?key=03201232927&dealer_id=$dealer_id';
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      setState(() {
+        dealersData = json.decode(response.body);
+        dispenserDataList = List.generate(dealersData.length, (index) => {});
+      });
+    } else {
+      throw Exception('Failed to load data');
+    }
+  }
   Future<void> sendstatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var user_id = prefs.getString("Id");
@@ -47,7 +80,7 @@ class MPricingState extends State<MPricing> {
 
       if (response.statusCode == 200) {
         print('Data sent successfully');
-        Navigator.push(context,
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name)),);
         Fluttertoast.showToast(
           msg: 'Data sent successfully',
@@ -71,12 +104,92 @@ class MPricingState extends State<MPricing> {
       });
     }
   }
+  Future<void> send_MPData() async {
+    setState(() {
+      isLoading = true; // Show loader
+    });
 
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var user_id = prefs.getString("Id");
+    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/create/dealers_inspection_measurement_pricing.php';
 
-  @override
-  void initState() {
-    super.initState();
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        body: {
+          'dealer_id':dealer_id,
+          'row_id': '',
+          'appreation': appreciationController.text.toString(),
+          'measure_taken': measuresController.text.toString(),
+          'warning': warningController.text.toString(),
+          'pmg_ogra_price': ograPmgController.text.toString(),
+          'pmg_pump_price': pumpPmgController.text.toString(),
+          'pmg_variance': variancePmgController.text.toString(),
+          'hsd_ogra_price': ograHsdController.text.toString(),
+          'hsd_pump_price': pumpHsdController.text.toString(),
+          'hsd_variance': varianceHsdController.text.toString(),
+          'dispenser_measre': json.encode(dispenserDataList),
+          'user_id': '$user_id',
+          'task_id': inspectionid,
+        },
+      );
+      if (response.statusCode == 200) {
+        sendstatus();
+      } else {
+        // Handle errors, if needed
+        print('Failed to send data. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle exceptions, if needed
+      print('Error: $e');
+    }
   }
+  bool validateFields() {
+    if (appreciationController.text.isEmpty ||
+        measuresController.text.isEmpty ||
+        warningController.text.isEmpty ||
+        ograPmgController.text.isEmpty ||
+        ograHsdController.text.isEmpty ||
+        pumpPmgController.text.isEmpty ||
+        pumpHsdController.text.isEmpty ||
+        variancePmgController.text.isEmpty ||
+        varianceHsdController.text.isEmpty) {
+      // Display an error message or handle it in any way you prefer
+      Fluttertoast.showToast(
+        msg: 'Please fill in all the fields',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+      return false;
+    }
+
+    for (int index = 0; index < dealersData.length; index++) {
+      if (dealersData[index]['nozels'] != null && dealersData[index]['nozels'].isNotEmpty)
+        if (dispenserDataList[index]['pmg_accurate'] == null ||
+          dispenserDataList[index]['pmg_shortage'] == null ||
+          dispenserDataList[index]['hsd_accurate'] == null ||
+          dispenserDataList[index]['hsd_shortage'] == null) {
+        Fluttertoast.showToast(
+          msg: 'Please fill in all fields',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+        return false;
+      }
+    }
+    return true;
+  }
+
+
+
 
 
   @override
@@ -103,179 +216,125 @@ class MPricingState extends State<MPricing> {
             padding: const EdgeInsets.all(7.0),
             child: Column(
               children: [
-                /*
                 ListView.builder(
                   physics: NeverScrollableScrollPhysics(),
                   scrollDirection: Axis.vertical,
                   shrinkWrap: true,
-                  itemCount: filteredData.length,
-                  itemBuilder: (BuildContext context, int index2) {
-                    if (filteredData.isNotEmpty && index2 < filteredData.length) {
-                      final TextEditingController controller =
-                      readingControllers.length > index2
-                          ? readingControllers[index2]
-                          : TextEditingController();
-                      if (readingControllers.length <= index2) {
-                        readingControllers.add(controller);
-                      }
+                  itemCount: dealersData.length,
+                  itemBuilder: (context, index) {
+                    final dealerData = dealersData[index];
+                    dispenserNum++;
+                    nozzelNum = 1; // Reset for each dispenser
 
-                      final id = filteredData[index2]['id'];
-                      final date_month = filteredData[index2]['date_month'];
-                      final target_amount = filteredData[index2]['target_amount'];
-                      final product_id = filteredData[index2]["product_id"];
-                      final dealer_id = filteredData[index2]["dealer_id"];
-                      final created_at = filteredData[index2]["created_at"];
-                      final created_by = filteredData[index2]["created_by"];
-                      final description = filteredData[index2]["description"];
-                      final name = filteredData[index2]["name"];
-                      final total_sum_target = filteredData[index2]["total_sum_target"];
-                      controller.addListener(() {
-                        print("Updated reason for variation: ${controller.text}");
-                        filteredData[index2]['reason_for_variation'] = controller.text;
-                        print(filteredData[0]['reason_for_variation']);
-                        print(filteredData[1]['reason_for_variation']);
-                      });
-
-
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Card(
-                          color: Color(0xffe8e8e8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                    return Card(
+                      margin: EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              'DU${dispenserNum}: ${dealerData['name']}',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          if (dealerData['nozels'] != null && dealerData['nozels'].isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("PMG: "),
+                                  Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Text(
-                                      "$name",
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
-                                        fontStyle: FontStyle.normal,
-                                        color: Color(0xff12283D),
-                                        fontSize: 16,
+                                    Expanded(
+                                      child: TextField(
+                                        //controller: controller,
+                                        decoration: InputDecoration(
+                                          labelText: 'Accurate (Y/N)',
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12.0),
+                                          ),
+                                        ),
+                                          onChanged: (value) {
+                                            // Update the corresponding data in the list
+                                            dispenserDataList[index]['dispenser_id'] = dealerData['id'];
+                                            dispenserDataList[index]['pmg_accurate'] = value;
+                                          }
                                       ),
                                     ),
-                                    Icon(Icons.filter_alt_outlined),
-                                  ],
-                                ),
-                                SizedBox(height: 5,),
-                                Text(
-                                  "Target for the Month: $target_amount",
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w200,
-                                    fontStyle: FontStyle.normal,
-                                    color: Colors.black54,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                SizedBox(height: 5,),
-                                Text(
-                                  "Actual To Date: $total_sum_target",
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w200,
-                                    fontStyle: FontStyle.normal,
-                                    color: Colors.black54,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                SizedBox(height: 5,),
-                                Text(
-                                  "Variances: ${int.parse(total_sum_target) - int.parse(target_amount)}",
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w200,
-                                    fontStyle: FontStyle.normal,
-                                    color: Colors.black54,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                SizedBox(height: 15,),
-                                TextField(
-                                  controller: controller,
-                                  decoration: InputDecoration(
-                                    labelText: 'Reason for Variation',
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12.0),
+                                    SizedBox(width: 10), // Adjust the spacing between text fields
+                                    Expanded(
+                                      child: TextField(
+                                        //controller: controller,
+                                        decoration: InputDecoration(
+                                          labelText: 'Shortage %',
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12.0),
+                                          ),
+                                        ),
+                                          onChanged: (value) {
+                                            // Update the corresponding data in the list
+                                            dispenserDataList[index]['pmg_shortage'] = value;
+                                          }
+                                      ),
                                     ),
+                                  ],
                                   ),
-                                ),
-                              ],
+                                  SizedBox(
+                                      height: 10
+                                  ),
+                                  Text("HSD: "),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: TextField(
+                                          //controller: controller,
+                                          decoration: InputDecoration(
+                                            labelText: 'Accurate (Y/N)',
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12.0),
+                                            ),
+                                          ),
+                                            onChanged: (value) {
+                                              // Update the corresponding data in the list
+                                              dispenserDataList[index]['hsd_accurate'] = value;
+                                            }
+                                        ),
+                                      ),
+                                      SizedBox(width: 10), // Adjust the spacing between text fields
+                                      Expanded(
+                                        child: TextField(
+                                          //controller: controller,
+                                          decoration: InputDecoration(
+                                            labelText: 'Shortage %',
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12.0),
+                                            ),
+                                          ),
+                                            onChanged: (value) {
+                                              // Update the corresponding data in the list
+                                              dispenserDataList[index]['hsd_shortage'] = value;
+                                            }
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ),
-                      );
-                    } else {
-                      return Container();
-                    }
+                        ],
+                      ),
+                    );
                   },
-                ),
-                */
-                Card(
-                  color: Color(0xffe8e8e8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              "DU1: PMG ",
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
-                                fontStyle: FontStyle.normal,
-                                color: Color(0xff12283D),
-                                fontSize: 16,
-                              ),
-                            ),
-                            Icon(Icons.filter_alt_outlined),
-                          ],
-                        ),
-                        SizedBox(height: 10,),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                //controller: controller,
-                                decoration: InputDecoration(
-                                  labelText: 'Accurate (Y/N)',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 10), // Adjust the spacing between text fields
-                            Expanded(
-                              child: TextField(
-                                //controller: controller,
-                                decoration: InputDecoration(
-                                  labelText: 'Shortage %',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
                 SizedBox(
                   height: 10
                 ),
-
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -284,7 +343,7 @@ class MPricingState extends State<MPricing> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TextField(
-                          //controller: controller,
+                          controller: appreciationController,
                           decoration: InputDecoration(
                             labelText: 'Appreciation of the dealer if Correct:',
                             border: OutlineInputBorder(
@@ -294,9 +353,9 @@ class MPricingState extends State<MPricing> {
                         ),
                         SizedBox(height: 5,),
                         TextField(
-                          //controller: controller,
+                          controller: measuresController,
                           decoration: InputDecoration(
-                            labelText: 'Measures taken to overcomes shortage',
+                            labelText: 'Measures taken to overcome shortage',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12.0),
                             ),
@@ -304,7 +363,7 @@ class MPricingState extends State<MPricing> {
                         ),
                         SizedBox(height: 5,),
                         TextField(
-                          //controller: controller,
+                          controller: warningController,
                           decoration: InputDecoration(
                             labelText: 'Warning:',
                             border: OutlineInputBorder(
@@ -320,7 +379,7 @@ class MPricingState extends State<MPricing> {
                           children: [
                             Expanded(
                               child: TextField(
-                                //controller: controller,
+                                controller: ograPmgController,
                                 decoration: InputDecoration(
                                   labelText: 'PMG',
                                   border: OutlineInputBorder(
@@ -332,7 +391,7 @@ class MPricingState extends State<MPricing> {
                             SizedBox(width: 10), // Adjust the spacing between text fields
                             Expanded(
                               child: TextField(
-                                //controller: controller,
+                                controller: ograHsdController,
                                 decoration: InputDecoration(
                                   labelText: 'HSD',
                                   border: OutlineInputBorder(
@@ -351,7 +410,7 @@ class MPricingState extends State<MPricing> {
                           children: [
                             Expanded(
                               child: TextField(
-                                //controller: controller,
+                                controller: pumpPmgController,
                                 decoration: InputDecoration(
                                   labelText: 'PMG',
                                   border: OutlineInputBorder(
@@ -363,7 +422,7 @@ class MPricingState extends State<MPricing> {
                             SizedBox(width: 10), // Adjust the spacing between text fields
                             Expanded(
                               child: TextField(
-                                //controller: controller,
+                                controller: pumpHsdController,
                                 decoration: InputDecoration(
                                   labelText: 'HSD',
                                   border: OutlineInputBorder(
@@ -382,7 +441,7 @@ class MPricingState extends State<MPricing> {
                           children: [
                             Expanded(
                               child: TextField(
-                                //controller: controller,
+                                controller: variancePmgController,
                                 decoration: InputDecoration(
                                   labelText: 'PMG',
                                   border: OutlineInputBorder(
@@ -394,7 +453,7 @@ class MPricingState extends State<MPricing> {
                             SizedBox(width: 10), // Adjust the spacing between text fields
                             Expanded(
                               child: TextField(
-                                //controller: controller,
+                                controller: varianceHsdController,
                                 decoration: InputDecoration(
                                   labelText: 'HSD',
                                   border: OutlineInputBorder(
@@ -424,7 +483,10 @@ class MPricingState extends State<MPricing> {
                   onPressed: isLoading
                       ? null // Disable button while loading
                       : () {
-                    sendstatus();
+                    print("hellow world 1: $dispenserDataList");
+                    if (validateFields()) {
+                      send_MPData();
+                    }
                   },
                   child: isLoading
                       ? CircularProgressIndicator() // Show loader

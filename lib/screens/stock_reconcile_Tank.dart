@@ -145,7 +145,7 @@ class _StockReconcileTankPageState extends State<StockReconcileTankPage> {
 
       if (response.statusCode == 200) {
         print('Data sent successfully');
-        Navigator.push(context,
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name)),);
         Fluttertoast.showToast(
           msg: 'Data sent successfully',

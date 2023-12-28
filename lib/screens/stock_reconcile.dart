@@ -29,65 +29,37 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
 
   List<Map<String, dynamic>> filteredData = [];
   List<Map<String, dynamic>> filteredData1 = [];
+  List<Map<String, dynamic>> data = [];
   String number_of_nozzel= "0";
   String number_of_Tank= "0";
   List<TextEditingController> readingControllers = [];
   bool isLoading = false;
+  List<Map<String, dynamic>> result = [];
+  List<dynamic> dealersData = [];
+  int dispenserNum = 0;
+  int nozzelNum = 1;
 
   @override
   void initState() {
     super.initState();
-    get_dealer_nozzles(dealer_id);
-    get_dealer_Tank(dealer_id);
+    // get_dealer_nozzles(dealer_id);
+    fetchData(dealer_id);
   }
+  Future<void> fetchData(dealer_id) async {
+    final String apiUrl =
+        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/dealers_dispensor_nozles.php?key=03201232927&dealer_id=$dealer_id';
+    final response = await http.get(Uri.parse(apiUrl));
 
-  Future<List<Map<String, dynamic>>> get_dealer_nozzles(String dealerId) async {
-    final apiUrl =
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_dealers_nozels.php?key=03201232927&dealer_id=$dealerId';
-
-    try {
-      final response = await http.get(Uri.parse(apiUrl));
-
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        List<Map<String, dynamic>> resultList =
-        data.map((item) => Map<String, dynamic>.from(item)).toList();
-        setState(() {
-          filteredData = List<Map<String, dynamic>>.from(data);
-          number_of_nozzel= filteredData[filteredData.length - 1]["no_of_nozel"];
-        });
-        return resultList;
-      } else {
-        throw Exception('Failed to load data');
-      }
-    } catch (e) {
-      print('Error: $e');
+    if (response.statusCode == 200) {
+      setState(() {
+        dealersData = json.decode(response.body);
+      });
+    } else {
       throw Exception('Failed to load data');
     }
   }
-  Future<List<Map<String, dynamic>>> get_dealer_Tank(String dealerId) async {
-    final apiUrl =
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_dealers_tanks.php?key=03201232927&dealer_id=$dealerId';
-    try {
-      final response = await http.get(Uri.parse(apiUrl));
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        List<Map<String, dynamic>> resultList =
-        data.map((item) => Map<String, dynamic>.from(item)).toList();
-        setState(() {
-          filteredData1 = List<Map<String, dynamic>>.from(data);
-          number_of_Tank = "${filteredData1.length}";
-        });
-        return resultList;
-      } else {
-        throw Exception('Failed to load data');
-      }
-    } catch (e) {
-      print('Error: $e');
-      throw Exception('Failed to load data');
-    }
-  }
-  Future<void> sendReconciliationData(int index,String id, String oldReading, String newReading, String product) async {
+
+  Future<void> sendReconciliationData(int index,String id, String oldReading, String newReading, String product, String dispenser_id) async {
     setState(() {
       isLoading = true; // Show loader
     });
@@ -108,11 +80,12 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
           'row_id': '',
           'task_id':inspectionid,
           'dealer_id':dealer_id,
+          'dispenser_id':dispenser_id,
         },
       );
 
       if (response.statusCode == 200) {
-        if(filteredData.length-1 == index){
+        if(dealersData.length-1 == index){
           sendstatus();
         }
       } else {
@@ -141,7 +114,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
 
       if (response.statusCode == 200) {
         print('Data sent successfully');
-        Navigator.push(context,
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name)),);
         Fluttertoast.showToast(
           msg: 'Data sent successfully',
@@ -165,82 +138,99 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
       });
     }
   }
+  Future<void> printNozzleValues() async {
+    int nozzleIndex = 0; // Track the overall nozzle index
+    bool readingIssueDetected = false; // Flag to track if any reading issue is detected
 
+    for (int index = 0; index < dealersData.length; index++) {
+      final dealerData = dealersData[index];
 
-  void printReadingControllersValues() {
-    if (checkNullReadings()) {
-      bool allReadingsValid = true;
+      if (dealerData['nozels'] != null && dealerData['nozels'].isNotEmpty) {
+        print('DU${index + 1}: ${dealerData['name']}');
 
-      for (int index = 0; index < readingControllers.length; index++) {
-        String oldReading = filteredData[index]['new_reading'] ?? '0';
-        String newReading = readingControllers[index].text;
+        for (int i = 0; i < dealerData['nozels'].length; i++) {
+          final nozzle = dealerData['nozels'][i];
+          String nozzleName = nozzle['product_name'];
+          TextEditingController controller = readingControllers[nozzleIndex];
+          String reading = controller.text;
 
-        if (double.parse(newReading) < double.parse(oldReading)) {
-          allReadingsValid = false;
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text('Invalid Reading'),
-                content: Text('New reading cannot be smaller than the old reading for Nozzle ${index + 1}'),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text('OK'),
-                  ),
-                ],
+          // Check if the reading controller has a value
+          if (reading == null || reading.isEmpty) {
+            if (!readingIssueDetected) {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('Missing Reading'),
+                    content: Text('DU${index + 1} Nozzle${i + 1}: $nozzleName, Reading: Not available'),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Text('OK'),
+                      ),
+                    ],
+                  );
+                },
               );
-            },
-          );
-          break; // Break out of the loop if any reading is invalid
-        }
-      }
+            }
+            print('Nozzle${i + 1}: $nozzleName, Reading: Not available');
+            readingIssueDetected = true; // Set the flag to true
+          } else {
+            // Check if the reading is greater than or equal to the nozzle's new_reading
+            double nozzleNewReading = double.parse(nozzle['new_reading'] ?? '0');
+            double controllerReading = double.parse(reading);
 
-      if (allReadingsValid) {
-        // If all readings are valid, proceed to post data
-        for (int index = 0; index < readingControllers.length; index++) {
-          String oldReading = filteredData[index]['new_reading'] ?? '0';
-          String newReading = readingControllers[index].text;
-
-          sendReconciliationData(
-            index,
-            filteredData[index]['id'],
-            oldReading,
-            newReading,
-            filteredData[index]['products'],
-          );
-        }
-      }
-    }
-  }
-
-  bool checkNullReadings() {
-    for (int index = 0; index < readingControllers.length; index++) {
-      if (readingControllers[index].text.isEmpty) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Missing Reading'),
-              content: Text('Reading of Nozzle ${index+1} is not taken. Please take its reading.'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
+            if (controllerReading >= nozzleNewReading) {
+              sendReconciliationData(
+                index,
+                nozzle['id'],
+                nozzleNewReading.toString(),
+                controllerReading.toString(),
+                nozzle['products'],
+                nozzle['dispenser_id'],
+              );
+              print('Nozzle${i + 1}: $nozzleName, Reading: $reading');
+            } else {
+              if (!readingIssueDetected) {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Invalid Reading'),
+                      content: Text('DU${index + 1} Nozzle${i + 1}: $nozzleName, Reading: Invalid (less than new reading)'),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text('OK'),
+                        ),
+                      ],
+                    );
                   },
-                  child: Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-        return false; // Stop checking if one null reading is found
+                );
+              }
+              print('Nozzle${i + 1}: $nozzleName, Reading: Invalid (less than new reading)');
+              readingIssueDetected = true; // Set the flag to true
+            }
+          }
+          nozzleIndex++; // Increment the overall nozzle index
+          if (readingIssueDetected) {
+            break;
+          }
+          if (index == dealersData.length - 1 && i == dealerData['nozels'].length - 1) {
+            await sendstatus();
+          }
+        }
       }
     }
-    return true; // All readings are non-empty
   }
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -260,255 +250,95 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
           color: Colors.white,
         ),
       ),
-      body: SingleChildScrollView(
-        child: Container(
+      body: Container(
+        child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(7.0),
             child: Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Card(
-                      // Total Nozzles Card
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10))),
-                      color: Color(0xff3a833c),
-                      elevation: 15,
-                      child: SizedBox(
-                        width: 165,
-                        height: 160,
-                        child: Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(
-                                height: 5,
-                              ),
-                              Card(
-                                color: Color(0xff586776),
-                                child: SizedBox(
-                                  width: 30,
-                                  height: 30,
-                                  child: Icon(
-                                    Icons.bookmark_border,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 5,
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Total Nozzles',
-                                    style: GoogleFonts.poppins(
-                                      color: Color(0xffffffff),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  Text(
-                                    ' $number_of_nozzel Nozzle',
-                                    style: GoogleFonts.montserrat(
-                                      color: Color(0xffc7c7c7),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  OutlinedButton(
-                                    child: Text(
-                                      'View Reading',
-                                      style: GoogleFonts.montserrat(
-                                        color: Color(0xffc7c7c7),
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    style: OutlinedButton.styleFrom(
-                                      side: BorderSide(
-                                          width: 1.0, color: Color(0xd5e0e0e0)),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                    onPressed: () {},
-                                  )
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Card(
-                      // Total Tanks Card
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10))),
-                      color: Color(0xff3a833c),
-                      elevation: 15,
-                      child: SizedBox(
-                        width: 165,
-                        height: 160,
-                        child: Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(
-                                height: 5,
-                              ),
-                              Card(
-                                color: Color(0xff586776),
-                                child: SizedBox(
-                                  width: 30,
-                                  height: 30,
-                                  child: Icon(
-                                    Icons.bookmark_border,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 5,
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Total Tanks',
-                                    style: GoogleFonts.poppins(
-                                      color: Color(0xffffffff),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  Text(
-                                    '$number_of_Tank Tank',
-                                    style: GoogleFonts.montserrat(
-                                      color: Color(0xffc7c7c7),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  OutlinedButton(
-                                    child: Text(
-                                      'View Dips',
-                                      style: GoogleFonts.montserrat(
-                                        color: Color(0xffc7c7c7),
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    style: OutlinedButton.styleFrom(
-                                      side: BorderSide(
-                                          width: 1.0, color: Color(0xd5e0e0e0)),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => StockReconcileTankPage(dealer_id: dealer_id,inspectionid: inspectionid, dealer_name: dealer_name,)));
-                                    },
-                                  )
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
                 ListView.builder(
                   physics: NeverScrollableScrollPhysics(),
                   scrollDirection: Axis.vertical,
                   shrinkWrap: true,
-                  itemCount: filteredData.length,
-                  itemBuilder: (BuildContext context, int index2) {
-                    if (filteredData.isNotEmpty && index2 < filteredData.length) {
-                      final TextEditingController controller =
-                      readingControllers.length > index2
-                          ? readingControllers[index2]
-                          : TextEditingController();
-                      if (readingControllers.length <= index2) {
-                        readingControllers.add(controller);
-                      }
+                  itemCount: dealersData.length,
+                  itemBuilder: (context, index) {
+                    final dealerData = dealersData[index];
+                    dispenserNum++;
+                    nozzelNum = 1; // Reset for each dispenser
 
-                      final id = filteredData[index2]['id'];
-                      final name = filteredData[index2]['name'];
-                      final no_of_nozzle = filteredData[index2]['no_of_nozzle'];
-                      final products = filteredData[index2]["products"];
-                      final product_name = filteredData[index2]["product_name"];
-                      final created_by = filteredData[index2]["created_by"];
-                      final old_reading =
-                      filteredData[index2]["new_reading"] == null ? '0' : filteredData[index2]["new_reading"];
-
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Card(
-                          color: Color(0xffe8e8e8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
+                    return Card(
+                      margin: EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              'DU${dispenserNum}: ${dealerData['name']}',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          if (dealerData['nozels'] != null &&
+                              dealerData['nozels'].isNotEmpty)
+                            Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Nozzle ${index2+1}: $product_name",
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
-                                        fontStyle: FontStyle.normal,
-                                        color: Color(0xff12283D),
-                                        fontSize: 16,
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'Nozzles',
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                Column(
+                                  children: dealerData['nozels'].map<Widget>((nozzle) {
+                                    final TextEditingController controller =
+                                    TextEditingController();
+                                    readingControllers.add(controller);
+                                    return Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 8.0),
+                                            child: Text(
+                                              'Nozzle${nozzelNum++}: ${nozzle['product_name']}',
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 8.0),
+                                            child: Text(
+                                              'Last Reading: ${nozzle['new_reading'] ?? 0} ltr.',
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 8.0),
+                                            child: TextField(
+                                              controller: controller,
+                                              keyboardType: TextInputType.number,
+                                              decoration: InputDecoration(
+                                                labelText: 'Present Reading:',
+                                                border: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(12.0),
+                                                ),
+                                                hintText: 'Enter reading ',
+                                              ),
+                                              onChanged: (value) {
+                                                print('Reading for Nozzle ${nozzle['id']}: $value');
+                                              },
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    Icon(Icons.filter_alt_outlined),
-                                  ],
-                                ),
-                                SizedBox(height: 10,),
-                                Text(
-                                  "Recent Reading: $old_reading ltr.",
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w200,
-                                    fontStyle: FontStyle.normal,
-                                    color: Colors.black54,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                SizedBox(height: 15,),
-                                TextField(
-                                  controller: controller,
-                                  keyboardType: TextInputType.number,
-                                  decoration: InputDecoration(
-                                    labelText: 'Current Reading',
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12.0),
-                                    ),
-                                    hintText: 'Enter current Reading',
-                                  ),
-                                  onChanged: (value) {
-                                    print('Current Reading: $value');
-                                  },
+                                    );
+                                  }).toList(),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                      );
-                    } else {
-                      return Container();
-                    }
+                        ],
+                      ),
+                    );
                   },
                 ),
                 SizedBox(
@@ -526,7 +356,8 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
                   onPressed: isLoading
                       ? null // Disable button while loading
                       : () {
-                    printReadingControllersValues();
+                    //printReadingControllersValues();
+                    printNozzleValues();
                   },
                   child: isLoading
                       ? CircularProgressIndicator() // Show loader

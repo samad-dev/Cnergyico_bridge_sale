@@ -29,6 +29,7 @@ class SalesPerformanceState extends State<SalesPerformance> {
   bool isLoading = false;
   List<Map<String, dynamic>> filteredData = [];
   List<String> variancesList = [];
+  String result='';
 
 
   @override
@@ -39,6 +40,7 @@ class SalesPerformanceState extends State<SalesPerformance> {
   Future<void> sendstatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var user_id = prefs.getString("Id");
+    print("inspectionid: $inspectionid");
     final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
 
     try {
@@ -52,9 +54,12 @@ class SalesPerformanceState extends State<SalesPerformance> {
       );
 
       if (response.statusCode == 200) {
-        print('Data sent successfully');
-        Navigator.push(context,
-          MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name)),);
+        result = response.body;
+        print("result $result");
+        if(result == "1") {
+          print('Data sent successfully');
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name)),);
           Fluttertoast.showToast(
             msg: 'Data sent successfully',
             toastLength: Toast.LENGTH_SHORT,
@@ -64,6 +69,7 @@ class SalesPerformanceState extends State<SalesPerformance> {
             textColor: Colors.white,
             fontSize: 16.0,
           );
+        }
       } else {
         // Handle errors, if needed
         print('Failed to send data. Status Code: ${response.statusCode}');
