@@ -5,6 +5,7 @@ import 'package:hascol_inspection/screens/Task_Dashboard.dart';
 import 'package:hascol_inspection/screens/stock_reconcile_Tank.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
 import 'outlets_list.dart';
@@ -41,7 +42,7 @@ class SalesPerformanceState extends State<SalesPerformance> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var user_id = prefs.getString("Id");
     print("inspectionid: $inspectionid");
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
+    final apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/update/inspection/update_inspections_status.php';
 
     try {
       final response = await http.post(
@@ -91,7 +92,7 @@ class SalesPerformanceState extends State<SalesPerformance> {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var user_id = prefs.getString("Id");
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/create/dealers_target_return_response.php';
+    final apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/create/dealers_target_return_response.php';
 
     try {
       final response = await http.post(
@@ -142,7 +143,7 @@ class SalesPerformanceState extends State<SalesPerformance> {
   }
   Future<List<Map<String, dynamic>>> TargetSales(String dealerId) async {
     final apiUrl =
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_dealer_monthly_target.php?key=03201232927&dealer_id=$dealerId';
+        'http://151.106.17.246:8080/bycobridgeApis/get/get_dealer_monthly_target.php?key=03201232927&dealer_id=$dealerId';
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -247,7 +248,7 @@ class SalesPerformanceState extends State<SalesPerformance> {
                                 ),
                                 SizedBox(height: 5,),
                                 Text(
-                                  "Target for the Month: $target_amount",
+                                  "Target for the Month: ${NumberFormat.decimalPattern('en').format(int.parse(target_amount))}",
                                   style: GoogleFonts.poppins(
                                     fontWeight: FontWeight.w200,
                                     fontStyle: FontStyle.normal,
@@ -257,7 +258,7 @@ class SalesPerformanceState extends State<SalesPerformance> {
                                 ),
                                 SizedBox(height: 5,),
                                 Text(
-                                  "Actual To Date: $total_sum_target",
+                                  "Actual To Date: ${NumberFormat.decimalPattern('en').format(int.parse(total_sum_target))}",
                                   style: GoogleFonts.poppins(
                                     fontWeight: FontWeight.w200,
                                     fontStyle: FontStyle.normal,
@@ -267,7 +268,7 @@ class SalesPerformanceState extends State<SalesPerformance> {
                                 ),
                                 SizedBox(height: 5,),
                                 Text(
-                                  "Variances: ${int.parse(total_sum_target) - int.parse(target_amount)}",
+                                  "Variances: ${NumberFormat.decimalPattern('en').format(int.parse(total_sum_target) - int.parse(target_amount))}",
                                   style: GoogleFonts.poppins(
                                     fontWeight: FontWeight.w200,
                                     fontStyle: FontStyle.normal,

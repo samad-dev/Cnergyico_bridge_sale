@@ -4,8 +4,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hascol_inspection/screens/casualvisit.dart';
 import 'package:hascol_inspection/screens/create_order.dart';
 import 'package:hascol_inspection/screens/home.dart';
 import 'package:hascol_inspection/screens/login.dart';
@@ -13,6 +15,7 @@ import 'package:hascol_inspection/screens/profile.dart';
 import 'package:hascol_inspection/screens/stock_reconcile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 
 
@@ -33,17 +36,23 @@ class _OutletsState extends State<Outlets> {
   List<Map<String, dynamic>> filteredData = [];
   String searchQuery = '';
   bool isLoading = true;
+  LocationData? _currentLocation;
+  var inspectorlat;
+  var inspectorlng;
+  var dealerlat;
+  var dealerlng;
   @override
   void initState() {
     super.initState();
     Outlets_list();
+    _getLocation();
   }
 
   Future<void> Outlets_list() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     var pre = prefs.getString("privilege");
-    final response = await http.get(Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/outlet_count.php?key=03201232927&id=$id&pre=$pre'));
+    final response = await http.get(Uri.parse('http://151.106.17.246:8080/bycobridgeApis/get/inspection/outlet_count.php?key=03201232927&id=$id&pre=$pre'));
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       setState(() {
@@ -64,6 +73,66 @@ class _OutletsState extends State<Outlets> {
         filteredData = outlets_list;
       }
     });
+  }
+  Future<void> _getLocation() async {
+    try {
+      Location location = Location();
+
+      bool _serviceEnabled;
+      PermissionStatus _permissionGranted;
+
+      _serviceEnabled = await location.serviceEnabled();
+      if (!_serviceEnabled) {
+        _serviceEnabled = await location.requestService();
+        if (!_serviceEnabled) {
+          return;
+        }
+      }
+
+      _permissionGranted = await location.hasPermission();
+      if (_permissionGranted == PermissionStatus.denied) {
+        _permissionGranted = await location.requestPermission();
+        if (_permissionGranted != PermissionStatus.granted) {
+          return;
+        }
+      }
+
+      LocationData locationData = await location.getLocation();
+      setState(() {
+        _currentLocation = locationData;
+        inspectorlat= _currentLocation?.latitude.toString();
+        inspectorlng = _currentLocation?.longitude.toString();
+      });
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+  Future<void> ISIN(String d_lat,String d_lng,String i_lat,String i_lng,name,dealer_id) async {
+    final String apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/get/inspection/inspector_checkin.php?key=03201232927&i_lat=$i_lat&i_lng=$i_lng&d_lat=$d_lat&d_lng=$d_lng';
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        String result = response.body;
+        print("result $result");
+        if(result == "IN")
+        {
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => CasualVisitPage(dealer_id: dealer_id,dealer_name: name!,)));
+        }
+
+        else
+        {
+          Fluttertoast.showToast(msg: 'You have not reached your destination',
+              toastLength: Toast.LENGTH_LONG,backgroundColor: Colors.redAccent);
+        }
+      } else {
+        // Handle error
+        print('Error1: ${response.statusCode}');
+      }
+    } catch (error) {
+      // Handle exceptions
+      print('Error: $error');
+    }
   }
 
   int _selectedIndex = 1;
@@ -134,6 +203,7 @@ class _OutletsState extends State<Outlets> {
                         final contact = filteredData[index2]['contact'];
                         final sap_no = filteredData[index2]["sap_no"];
                         final name=filteredData[index2]["name"];
+                        final co_ordinates = filteredData[index2]['co-ordinates'];
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4.0),
                           child: Card(
@@ -439,6 +509,27 @@ class _OutletsState extends State<Outlets> {
                                                   style: TextStyle(color: Colors.white, fontSize: 12),
                                                 ), // Button text
                                               ],
+                                            ),
+                                          ),
+                                          SizedBox(width: 10,),
+                                          ElevatedButton(
+                                            onPressed: () async{
+                                              var dealerlatlng = co_ordinates.split(',');
+                                              dealerlat= dealerlatlng[0];
+                                              dealerlng = dealerlatlng[1];
+                                              print(co_ordinates);
+                                              print(dealerlatlng);
+                                              ISIN(dealerlat,dealerlng,inspectorlat,inspectorlng,name,dealer_id);
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              elevation: 4.0, backgroundColor: Constants.secondary_color, // Set the button color
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(20.0), // Set your preferred border radius here
+                                              ),
+                                            ),
+                                            child: Text(
+                                              'Casual Visits',
+                                              style: TextStyle(color: Colors.white, fontSize: 12),
                                             ),
                                           ),
                                         ],

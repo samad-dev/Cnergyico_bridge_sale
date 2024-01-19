@@ -47,7 +47,7 @@ class _OrdersState extends State<Orders> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     var pre = prefs.getString("privilege");
-    final response = await http.get(Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/user_all_orders.php?key=03201232927&id=$id&pre=$pre'));
+    final response = await http.get(Uri.parse('http://151.106.17.246:8080/bycobridgeApis/get/inspection/user_all_orders.php?key=03201232927&id=$id&pre=$pre'));
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       setState(() {

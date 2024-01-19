@@ -80,12 +80,12 @@ class _ProfileState extends State<Profile> {
                             backgroundColor: Colors.white,
                             radius: 60,
                             child:Image.asset(
-                              'assets/images/puma icon.png',
+                              'assets/images/channels4_profile.png',
                               width: 75,
                             ),
                         ),
                         Text(
-                          'Puma Inspector',
+                          'cynergyco Inspector',
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             color: Color(0xff000000),

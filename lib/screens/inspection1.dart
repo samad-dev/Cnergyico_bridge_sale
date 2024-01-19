@@ -62,7 +62,7 @@ class _InspectionState extends State<Inspection> {
   Future<void> sendstatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var user_id = prefs.getString("Id");
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
+    final apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/update/inspection/update_inspections_status.php';
 
     try {
       final response = await http.post(
@@ -98,7 +98,7 @@ class _InspectionState extends State<Inspection> {
   }
   Future<void> fetchData() async {
     final response = await http.get(Uri.parse(
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_servey_data.php?key=03201232927'));
+        'http://151.106.17.246:8080/bycobridgeApis/get/get_servey_data.php?key=03201232927'));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
@@ -138,7 +138,7 @@ class _InspectionState extends State<Inspection> {
     }
 
     String apiUrl =
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/create/create_servey.php';
+        'http://151.106.17.246:8080/bycobridgeApis/create/create_servey.php';
     List<Map<String, dynamic>> jsonDataList = [];
     for (var caseData in cases) {
       jsonDataList.add({
@@ -210,7 +210,7 @@ class _InspectionState extends State<Inspection> {
     print(imagesToPost);
   }
   Future<void> postImages(List<Map<String, dynamic>> postDataList, List<Map<String, dynamic>> imagesToPost) async {
-    String apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/create/survey_detail_files.php';
+    String apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/create/survey_detail_files.php';
 
     try {
       for (var imageInfo in imagesToPost) {
@@ -431,7 +431,7 @@ class _InspectionState extends State<Inspection> {
     return unansweredQuestions.isEmpty;
   }
   Future<void> postSignatureImages(String dealerSignaturePath, String representerSignaturePath) async {
-    String apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/task_response.php';
+    String apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/update/inspection/task_response.php';
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     // Use null-aware operator to provide a default value if 'Id' is null

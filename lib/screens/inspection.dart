@@ -22,15 +22,17 @@ class CaseData {
   String title;
   List<String> questionIds;
   List<String> questions;
+  List<String> file;
   List<String?> responses;
   List<String?> comments;
-  List<List<String>> imagePaths;
+  List<String> imagePaths;
 
   CaseData({
     required this.id,
     required this.questionIds,
     required this.title,
     required this.questions,
+    required this.file,
     required this.responses,
     required this.comments,
     required this.imagePaths,
@@ -41,8 +43,9 @@ class Inspection extends StatefulWidget {
   final String? dealer_id;
   final String? inspectionid;
   final String? dealer_name;
+  final String? formId;
 
-  const Inspection({Key? key, this.dealer_id, this.inspectionid,this.dealer_name}) : super(key: key);
+  const Inspection({Key? key, this.dealer_id, this.inspectionid,this.dealer_name,this.formId}) : super(key: key);
 
   @override
   _InspectionState createState() => _InspectionState();
@@ -55,6 +58,7 @@ class _InspectionState extends State<Inspection> {
   TextEditingController commentController = TextEditingController();
   late String signatureImagePath;
   List<Map<String, dynamic>> imagesToPost = [];
+  List<List<TextEditingController>> controllersList = [];
 
   @override
   void initState() {
@@ -67,9 +71,22 @@ class _InspectionState extends State<Inspection> {
       for (int i = 0; i < caseData.comments.length; i++) {
         print('Question ${i + 1}: ${caseData.comments[i]}');
       }
+
       print('----------------------');
     }
   }
+  void printfileForCase(int caseIndex) {
+    for (var caseData in cases) {
+      print('Image for ${caseData.title}:');
+      for (int i = 0; i < caseData.imagePaths.length; i++) {
+        print('Image ${i + 1}: ${caseData.imagePaths[i]}');
+      }
+
+      print('----------------------');
+    }
+  }
+
+
   void showUnansweredQuestionsSlider(List<Map<String, dynamic>> unansweredQuestions) {
     showDialog(
       context: context,
@@ -289,7 +306,7 @@ class _InspectionState extends State<Inspection> {
 
   Future<void> fetchData() async {
     final response = await http.get(Uri.parse(
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_servey_data.php?key=03201232927'));
+        'http://151.106.17.246:8080/bycobridgeApis/get/get_servey_data.php?key=03201232927'));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
@@ -305,6 +322,9 @@ class _InspectionState extends State<Inspection> {
             questionIds: (category['Questions'] as List)
                 .map((question) => question['id'] as String)
                 .toList(),
+            file: (category['Questions'] as List)
+                .map((question) => question['file'] as String)
+                .toList(),
             responses: List<String?>.filled(
               (category['Questions'] as List).length,
               null,
@@ -313,9 +333,9 @@ class _InspectionState extends State<Inspection> {
               (category['Questions'] as List).length,
               null,
             ),
-            imagePaths: List<List<String>>.filled(
+            imagePaths: List<String>.filled(
               (category['Questions'] as List).length,
-              <String>[],
+              "",
             ),
           );
         }).toList();
@@ -333,7 +353,7 @@ class _InspectionState extends State<Inspection> {
     }
 
     String apiUrl =
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/create/create_servey.php';
+        'http://151.106.17.246:8080/bycobridgeApis/create/create_servey_new.php';
     List<Map<String, dynamic>> jsonDataList = [];
     for (var caseData in cases) {
       jsonDataList.add({
@@ -388,14 +408,6 @@ class _InspectionState extends State<Inspection> {
     print('Active Step: ${activeStep}');
 
     if (activeStep >= 0 && activeStep < cases.length) {
-      CaseData caseData = cases[activeStep];
-
-      // Make sure the index is within bounds
-      if (activeStep < caseData.imagePaths.length) {
-        caseData.imagePaths[activeStep].add(imagePath);
-      } else {
-        print('Invalid activeStep index for imagePaths: $activeStep');
-      }
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       var id = prefs.getString("Id");
@@ -408,11 +420,9 @@ class _InspectionState extends State<Inspection> {
         'dealer_id': widget.dealer_id,
         'inspection_id': widget.inspectionid,
       };
-
       // Add the index of this postData in the postedDataList
       int index = postedDataList.length;
       postedDataList.add(postData);
-
       // Save the image path along with the postData index
       imagesToPost.add({
         'index': index,
@@ -431,7 +441,7 @@ class _InspectionState extends State<Inspection> {
     }
   }
   Future<void> postImages(List<Map<String, dynamic>> postDataList, List<Map<String, dynamic>> imagesToPost) async {
-    String apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/create/survey_detail_files.php';
+    String apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/create/survey_detail_files.php';
 
     try {
       for (var imageInfo in imagesToPost) {
@@ -463,7 +473,16 @@ class _InspectionState extends State<Inspection> {
       print('Exception while posting image: $error');
     }
   }
-
+  void initializeControllersList() {
+    // Assuming cases is a list of CaseData objects
+    for (int i = 0; i < cases.length; i++) {
+      List<TextEditingController> controllers = [];
+      for (int j = 0; j < cases[i].questions.length; j++) {
+        controllers.add(TextEditingController());
+      }
+      controllersList.add(controllers);
+    }
+  }
   Widget _icon(int index, {required CaseData caseData}) {
     if (activeStep < 0 || activeStep >= cases.length) {
       activeStep = cases.length;
@@ -471,7 +490,7 @@ class _InspectionState extends State<Inspection> {
 
     String question = caseData.questions[index];
     TextEditingController commentController = TextEditingController();
-
+    initializeControllersList();
     return Padding(
       padding: const EdgeInsets.all(16),
       child: InkResponse(
@@ -499,7 +518,7 @@ class _InspectionState extends State<Inspection> {
                     updateResponse(caseData, index, value);
                   },
                 ),
-                if (valueIsNo(caseData, index))
+                if (valueIsNo(caseData, index)||caseData.file[index]=="required")
                   GestureDetector(
                     onTap: () async {
                       print('Camera button tapped');
@@ -511,13 +530,19 @@ class _InspectionState extends State<Inspection> {
                           caseData.questionIds[index],
                           imageFile.path,
                         );
+                        print(activeStep);
+                        saveImagePathAndPrintQuestion(activeStep, index, imageFile.path);
                         // Update the UI in real-time
-                        setState(() {});
+                        setState(() {
+                        });
                       } else {
                         print('Image capture canceled or failed.');
                       }
                     },
-                    child: Icon(Icons.camera_alt),
+                    child: Icon(
+                      Icons.camera_alt,
+                      color: caseData.imagePaths[index] != "" ? Colors.green : (caseData.file[index] == "required" ? Colors.red : null),
+                    )
                   ),
               ],
             ),
@@ -526,7 +551,7 @@ class _InspectionState extends State<Inspection> {
               children: [
                 Expanded(
                   child: TextField(
-                    controller: commentController,
+                    controller: controllersList[activeStep][index],//commentController,
                     decoration: InputDecoration(
                       hintText: 'Enter your comments...',
                     ),
@@ -542,6 +567,48 @@ class _InspectionState extends State<Inspection> {
       ),
     );
   }
+
+  bool checkImageAvailability(int activeStep) {
+    int printCounter = 0; // Initialize a counter variable
+
+    if (activeStep >= 0 && activeStep < cases.length) {
+      CaseData currentStep = cases[activeStep];
+      for (int i = 0; i < currentStep.questionIds.length; i++) {
+        if (currentStep.file[i] == "required" && currentStep.imagePaths[i] == "") {
+          print(currentStep.questions[i]);
+          printCounter++; // Increment the counter
+        }
+      }
+    }
+
+    print("Printed $printCounter times."); // Print the total count
+
+    // Return true if printCounter is zero, else false
+    return printCounter == 0;
+  }
+  void saveImagePathAndPrintQuestion(int activeStep, int index, String imageFilePath) {
+    if (activeStep >= 0 && activeStep < cases.length) {
+      CaseData currentStep = cases[activeStep];
+
+      if (index >= 0 && index < currentStep.questionIds.length) {
+        String questionId = currentStep.questionIds[index];
+        String question = currentStep.questions[index];
+
+        // Save the image path
+        currentStep.imagePaths[index] = imageFilePath;
+
+        print('Question ID: $questionId');
+        print('Question: $question');
+        print('Image path saved: $imageFilePath');
+      } else {
+        print('Invalid index for the active step');
+      }
+    } else {
+      print('Invalid active step');
+    }
+  }
+
+
   bool valueIsNo(CaseData caseData, int questionIndex) {
     return caseData.responses[questionIndex] == false.toString();
   }
@@ -598,41 +665,31 @@ class _InspectionState extends State<Inspection> {
       caseData.responses[questionIndex] = value;
     });
   }
-  Future<void> sendstatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var user_id = prefs.getString("Id");
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
+  Future<void> poststaus() async {
+    var request = http.MultipartRequest('POST', Uri.parse('http://151.106.17.246:8080/bycobridgeApis/update/inspection/update_department_users_from_status.php'));
+    request.fields.addAll({
+      'task_id': "${widget.inspectionid}",
+      'form_id': "${widget.formId}",
+    });
+    http.StreamedResponse response = await request.send();
 
-    try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        body: {
-          'task_id':widget.inspectionid,
-          'row_id': '',
-          'table_name':'inspection'
-        },
+    if (response.statusCode == 200) {
+      print(await response.stream.bytesToString());
+      Navigator.pushReplacement(context,
+        MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: widget.dealer_id,inspectionid: widget.inspectionid,dealer_name: widget.dealer_name)),);
+      Fluttertoast.showToast(
+        msg: 'Data sent successfully',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0,
       );
 
-      if (response.statusCode == 200) {
-        print('Data sent successfully');
-        Navigator.push(context,
-          MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: widget.dealer_id,inspectionid: widget.inspectionid,dealer_name: widget.dealer_name)),);
-        Fluttertoast.showToast(
-          msg: 'Data sent successfully',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-      } else {
-        // Handle errors, if needed
-        print('Failed to send data. Status Code: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Handle exceptions, if needed
-      print('Error: $e');
+    }
+    else {
+      print(response.reasonPhrase);
     }
   }
   Future<void> printData() async {
@@ -671,8 +728,8 @@ class _InspectionState extends State<Inspection> {
 
       // Post data
       await postSurveyData();
-      //await postImages(postedDataList,imagesToPost);
-      //sendstatus();
+      await postImages(postedDataList,imagesToPost);
+      poststaus();
       print("print my jason: ${jsonDataList}");
       /*
       Fluttertoast.showToast(
@@ -699,8 +756,6 @@ class _InspectionState extends State<Inspection> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
@@ -709,7 +764,7 @@ class _InspectionState extends State<Inspection> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Constants.primary_color,
-        title: Text('Inspection Form',style: TextStyle(color: Colors.white),),
+        title: Text('Inspection',style: TextStyle(color: Colors.white),),
         iconTheme: IconThemeData(
           color: Colors.white,
         ),
@@ -723,7 +778,20 @@ class _InspectionState extends State<Inspection> {
               activeStep: activeStep,
               onStepReached: (index) {
                 setState(() {
-                  activeStep = index;
+                  if (checkImageAvailability(activeStep) == true) {
+                    activeStep = index;
+                  } else {
+                    activeStep = activeStep;
+                    Fluttertoast.showToast(
+                      msg: 'Please provide all required image on this page',
+                      toastLength: Toast.LENGTH_SHORT,
+                      gravity: ToastGravity.BOTTOM,
+                      timeInSecForIosWeb: 1,
+                      backgroundColor: Colors.red,
+                      textColor: Colors.white,
+                      fontSize: 16.0,
+                    );
+                  }
                 });
               },
             ),
@@ -747,8 +815,23 @@ class _InspectionState extends State<Inspection> {
           if (validateResponses(unansweredQuestions)) {
             printData();
           } else {
-            showUnansweredQuestionsSlider(unansweredQuestions);
-            printAllComments();
+            if (checkImageAvailability(activeStep) == true) {
+              showUnansweredQuestionsSlider(unansweredQuestions);
+            } else {
+              Fluttertoast.showToast(
+                msg: 'Please provide all required image on this page',
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                fontSize: 16.0,
+              );
+            }
+            // showUnansweredQuestionsSlider(unansweredQuestions);
+            // printAllComments();
+            // print("_____printing_____");
+            // printfileForCase(0); // Replace 0 with the desired index
           }
         },
         child: Icon(Icons.send_rounded,color: Colors.white,),

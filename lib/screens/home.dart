@@ -109,7 +109,7 @@ class _HomeScreenState extends State<Home> {
     var pre = prefs.getString("privilege");
     user_privilege=pre;
     final response = await http.get(
-        Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/outlet_count.php?key=03201232927&id=$id&pre=$pre'));
+        Uri.parse('http://151.106.17.246:8080/bycobridgeApis/get/inspection/outlet_count.php?key=03201232927&id=$id&pre=$pre'));
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       setState(() {
@@ -125,7 +125,7 @@ class _HomeScreenState extends State<Home> {
     var id = prefs.getString("Id");
     var pre = prefs.getString("privilege");
     final response = await http.get(
-        Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/user_all_orders.php?key=03201232927&id=$id&pre=$pre'));
+        Uri.parse('http://151.106.17.246:8080/bycobridgeApis/get/inspection/user_all_orders.php?key=03201232927&id=$id&pre=$pre'));
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       setState(() {
@@ -136,14 +136,13 @@ class _HomeScreenState extends State<Home> {
       throw Exception('Failed to fetch data from the API');
     }
   }
-
   Future<void> Inspection_task() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     Name = prefs.getString("name");
     print(id);
     var pre = prefs.getString("privilege");
-    final response = await http.get(Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/inspector_task.php?key=03201232927&id=$id&pre=$pre'));
+    final response = await http.get(Uri.parse('http://151.106.17.246:8080/bycobridgeApis/get/inspection/inspector_task.php?key=03201232927&id=$id&pre=$pre'));
 
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
@@ -171,14 +170,12 @@ class _HomeScreenState extends State<Home> {
       throw Exception('Failed to fetch data from the API');
     }
   }
-
-
   Future<void> TransfersZM(String dealer_id) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     var pre = prefs.getString("privilege");
 
-    final response = await http.get(Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_spec_dealer.php?key=03201232927&dealer_id=$dealer_id'));
+    final response = await http.get(Uri.parse('http://151.106.17.246:8080/bycobridgeApis/get/get_spec_dealer.php?key=03201232927&dealer_id=$dealer_id'));
 
     if (response.statusCode == 200) {
       // Parse the response and get TM and ASM data
@@ -199,11 +196,10 @@ class _HomeScreenState extends State<Home> {
       throw Exception('Failed to fetch data from the API');
     }
   }
-
   void sendRequestReschedule(var taskId,String oldDate)async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
-    final apiUrl = "http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/task_reschedule.php";
+    final apiUrl = "http://151.106.17.246:8080/bycobridgeApis/update/inspection/task_reschedule.php";
     final data = {
       "user_id": id,
       "task_id": taskId,
@@ -246,7 +242,7 @@ class _HomeScreenState extends State<Home> {
   void sendRequestTransfer(var taskId,var transferid)async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
-    final apiUrl = "http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/transfer_task.php";
+    final apiUrl = "http://151.106.17.246:8080/bycobridgeApis/update/inspection/transfer_task.php";
     final data = {
       "user_id": id,
       "task_id": taskId,
@@ -285,7 +281,7 @@ class _HomeScreenState extends State<Home> {
     });
   }
   Future<void> ISIN(String d_lat,String d_lng,String i_lat,String i_lng,dealer_name,dealer_id,id) async {
-    final String apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/inspector_checkin.php?key=03201232927&i_lat=$i_lat&i_lng=$i_lng&d_lat=$d_lat&d_lng=$d_lng';
+    final String apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/get/inspection/inspector_checkin.php?key=03201232927&i_lat=$i_lat&i_lng=$i_lng&d_lat=$d_lat&d_lng=$d_lng';
     try {
       final response = await http.get(Uri.parse(apiUrl));
 
@@ -352,7 +348,7 @@ class _HomeScreenState extends State<Home> {
               children: [
                 Row(
                   children: [
-                    Image.asset("assets/images/puma icon.png", width: MediaQuery.of(context).size.width/6 ,),
+                    Image.asset("assets/images/channels4_profile.png", width: MediaQuery.of(context).size.width/6 ,),
                     SizedBox(
                       width: 5,
                     ),
@@ -449,7 +445,7 @@ class _HomeScreenState extends State<Home> {
                   child: Card(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.all(Radius.circular(10))),
-                    color: Color(0xff3a833c),//color: Color(0xff12283D),
+                    color: Constants.primary_color,//color: Color(0xff12283D),
                     elevation: 15,
                     child: SizedBox(
                       width: 165,
@@ -483,7 +479,7 @@ class _HomeScreenState extends State<Home> {
                                 Text(
                                   'Total Orders',
                                   style: GoogleFonts.poppins(
-                                    color: Color(0xffffffff),
+                                    color: Constants.secondary_color,
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
                                     fontStyle: FontStyle.normal,
@@ -492,7 +488,7 @@ class _HomeScreenState extends State<Home> {
                                 Text(
                                   '$total_orders Orders',
                                   style: GoogleFonts.montserrat(
-                                    color: Color(0xffc7c7c7),
+                                    color: Constants.secondary_color,
                                     fontWeight: FontWeight.w600,
                                     fontSize: 12,
                                     fontStyle: FontStyle.normal,
@@ -502,7 +498,7 @@ class _HomeScreenState extends State<Home> {
                                   child: Text(
                                     'View Order',
                                     style: GoogleFonts.montserrat(
-                                      color: Color(0xffc7c7c7),
+                                      color: Constants.secondary_color,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 12,
                                       fontStyle: FontStyle.normal,
@@ -510,7 +506,7 @@ class _HomeScreenState extends State<Home> {
                                   ),
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(
-                                        width: 1.0, color: Color(0xd5e0e0e0)),
+                                        width: 1.0, color: Constants.secondary_color),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),
                                     ),
@@ -539,7 +535,7 @@ class _HomeScreenState extends State<Home> {
                   child: Card(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.all(Radius.circular(10))),
-                    color: Color(0xff3a833c),//color: Color(0xff12283D),
+                    color: Constants.primary_color,//color: Color(0xff12283D),
                     elevation: 15,
                     child: SizedBox(
                       width: 165,
@@ -573,7 +569,7 @@ class _HomeScreenState extends State<Home> {
                                 Text(
                                   'Total Outlets',
                                   style: GoogleFonts.poppins(
-                                    color: Color(0xffffffff),
+                                    color: Constants.secondary_color,
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
                                     fontStyle: FontStyle.normal,
@@ -582,7 +578,7 @@ class _HomeScreenState extends State<Home> {
                                 Text(
                                   '$total_outlet Outlets',
                                   style: GoogleFonts.montserrat(
-                                    color: Color(0xffc7c7c7),
+                                    color: Constants.secondary_color,
                                     fontWeight: FontWeight.w600,
                                     fontSize: 12,
                                     fontStyle: FontStyle.normal,
@@ -592,7 +588,7 @@ class _HomeScreenState extends State<Home> {
                                   child: Text(
                                     'View Outlets',
                                     style: GoogleFonts.montserrat(
-                                      color: Color(0xffc7c7c7),
+                                      color: Constants.secondary_color,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 12,
                                       fontStyle: FontStyle.normal,
@@ -600,7 +596,7 @@ class _HomeScreenState extends State<Home> {
                                   ),
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(
-                                        width: 1.0, color: Color(0xd5e0e0e0)),
+                                        width: 1.0, color: Constants.secondary_color),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),
                                     ),

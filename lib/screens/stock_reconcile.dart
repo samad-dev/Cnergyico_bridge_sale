@@ -5,6 +5,7 @@ import 'package:hascol_inspection/screens/Task_Dashboard.dart';
 import 'package:hascol_inspection/screens/stock_reconcile_Tank.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
 import 'outlets_list.dart';
@@ -13,19 +14,21 @@ class StockReconcilePage extends StatefulWidget {
   final String dealer_id;
   final String inspectionid;
   final String dealer_name;
+  final String formId;
 
-  const StockReconcilePage({Key? key, required this.dealer_id, required this.inspectionid, required this.dealer_name}) : super(key: key);
+  const StockReconcilePage({Key? key, required this.dealer_id, required this.inspectionid, required this.dealer_name, required this.formId}) : super(key: key);
 
   @override
-  _StockReconcilePageState createState() => _StockReconcilePageState(dealer_id,inspectionid,dealer_name);
+  _StockReconcilePageState createState() => _StockReconcilePageState(dealer_id,inspectionid,dealer_name,formId);
 }
 
 class _StockReconcilePageState extends State<StockReconcilePage> {
   final String dealer_id;
   final String inspectionid;
   final String dealer_name;
+  final String formId;
 
-  _StockReconcilePageState(this.dealer_id,this.inspectionid, this.dealer_name);
+  _StockReconcilePageState(this.dealer_id,this.inspectionid, this.dealer_name, this.formId);
 
   List<Map<String, dynamic>> filteredData = [];
   List<Map<String, dynamic>> filteredData1 = [];
@@ -42,12 +45,11 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
   @override
   void initState() {
     super.initState();
-    // get_dealer_nozzles(dealer_id);
     fetchData(dealer_id);
   }
   Future<void> fetchData(dealer_id) async {
     final String apiUrl =
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/dealers_dispensor_nozles.php?key=03201232927&dealer_id=$dealer_id';
+        'http://151.106.17.246:8080/bycobridgeApis/get/dealers_dispensor_nozles.php?key=03201232927&dealer_id=$dealer_id';
     final response = await http.get(Uri.parse(apiUrl));
 
     if (response.statusCode == 200) {
@@ -58,7 +60,6 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
       throw Exception('Failed to load data');
     }
   }
-
   Future<void> sendReconciliationData(int index,String id, String oldReading, String newReading, String product, String dispenser_id) async {
     setState(() {
       isLoading = true; // Show loader
@@ -66,7 +67,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var user_id = prefs.getString("Id");
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/create/dealers_reconcilation.php';
+    final apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/create/dealers_reconcilation.php';
 
     try {
       final response = await http.post(
@@ -85,8 +86,15 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
       );
 
       if (response.statusCode == 200) {
+        print("data send sucessfully");
         if(dealersData.length-1 == index){
-          sendstatus();
+          poststaus();
+          print("api hit");
+        }else if(dealersData.length-2 == index){
+          if(dealersData[index+1]['nozels']==null || dealersData[index+1]['nozels'].isEmpty) {
+            poststaus();
+            print("api hit");
+          }
         }
       } else {
         // Handle errors, if needed
@@ -97,45 +105,32 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
       print('Error: $e');
     }
   }
-  Future<void> sendstatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var user_id = prefs.getString("Id");
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
+  Future<void> poststaus() async {
+    final String apiUrl =
+        'http://151.106.17.246:8080/bycobridgeApis/update/inspection/update_department_users_from_status.php';
+    var request = http.MultipartRequest('POST', Uri.parse('http://151.106.17.246:8080/bycobridgeApis/update/inspection/update_department_users_from_status.php'));
+    request.fields.addAll({
+      'task_id': inspectionid,
+      'form_id': "$formId",
+    });
+    http.StreamedResponse response = await request.send();
 
-    try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        body: {
-          'task_id':'$inspectionid',
-          'row_id': '',
-          'table_name':'dispensing_status'
-        },
+    if (response.statusCode == 200) {
+      print(await response.stream.bytesToString());
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name)),);
+      Fluttertoast.showToast(
+        msg: 'Data sent successfully',
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0,
       );
-
-      if (response.statusCode == 200) {
-        print('Data sent successfully');
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: inspectionid,dealer_name: dealer_name)),);
-        Fluttertoast.showToast(
-          msg: 'Data sent successfully',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.green,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-      } else {
-        // Handle errors, if needed
-        print('Failed to send data. Status Code: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Handle exceptions, if needed
-      print('Error: $e');
-    } finally {
-      setState(() {
-        isLoading = false; // Hide loader
-      });
+    }
+    else {
+      print(response.reasonPhrase);
     }
   }
   Future<void> printNozzleValues() async {
@@ -183,6 +178,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
             double controllerReading = double.parse(reading);
 
             if (controllerReading >= nozzleNewReading) {
+              print('Nozzle${i + 1}: $nozzleName, Reading: $reading');
               sendReconciliationData(
                 index,
                 nozzle['id'],
@@ -191,7 +187,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
                 nozzle['products'],
                 nozzle['dispenser_id'],
               );
-              print('Nozzle${i + 1}: $nozzleName, Reading: $reading');
+              //ERROR HERE
             } else {
               if (!readingIssueDetected) {
                 showDialog(
@@ -211,9 +207,9 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
                     );
                   },
                 );
+                readingIssueDetected = true; // Set the flag to true
               }
               print('Nozzle${i + 1}: $nozzleName, Reading: Invalid (less than new reading)');
-              readingIssueDetected = true; // Set the flag to true
             }
           }
           nozzleIndex++; // Increment the overall nozzle index
@@ -221,16 +217,44 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
             break;
           }
           if (index == dealersData.length - 1 && i == dealerData['nozels'].length - 1) {
-            await sendstatus();
+            await poststaus();
           }
         }
       }
     }
   }
 
+  Future<bool> validateReadings() async {
+    for (int index = 0; index < dealersData.length; index++) {
+      final dealerData = dealersData[index];
 
+      if (dealerData['nozels'] != null && dealerData['nozels'].isNotEmpty) {
+        for (int i = 0; i < dealerData['nozels'].length; i++) {
+          final nozzle = dealerData['nozels'][i];
+          TextEditingController controller = readingControllers[(index * dealerData['nozels'].length + i).toInt()];
+          String reading = controller.text;
 
+          // Check if the reading controller has a value
+          if (reading == null || reading.isEmpty) {
+            // If any reading is empty, return false
+            return false;
+          } else {
+            // Check if the reading is greater than or equal to the nozzle's new_reading
+            double nozzleNewReading = double.parse(nozzle['new_reading'] ?? '0');
+            double controllerReading = double.parse(reading);
 
+            if (controllerReading < nozzleNewReading) {
+              // If any reading is less than the nozzle's new_reading, return false
+              return false;
+            }
+          }
+        }
+      }
+    }
+
+    // If all readings are valid, return true
+    return true;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -263,7 +287,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
                   itemCount: dealersData.length,
                   itemBuilder: (context, index) {
                     final dealerData = dealersData[index];
-                    dispenserNum++;
+                    dispenserNum =1;
                     nozzelNum = 1; // Reset for each dispenser
 
                     return Card(
@@ -274,7 +298,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              'DU${dispenserNum}: ${dealerData['name']}',
+                              '${dealerData['name']}',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -309,7 +333,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
                                           Padding(
                                             padding: const EdgeInsets.only(left: 8.0),
                                             child: Text(
-                                              'Last Reading: ${nozzle['new_reading'] ?? 0} ltr.',
+                                              'Last Reading: ${NumberFormat.decimalPattern('en').format(double.parse(nozzle['new_reading'] ?? "0"))} ltr.',
                                             ),
                                           ),
                                           Padding(
@@ -324,11 +348,9 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
                                                 ),
                                                 hintText: 'Enter reading ',
                                               ),
-                                              onChanged: (value) {
-                                                print('Reading for Nozzle ${nozzle['id']}: $value');
-                                              },
                                             ),
                                           ),
+
                                         ],
                                       ),
                                     );
@@ -355,9 +377,16 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
                   ),
                   onPressed: isLoading
                       ? null // Disable button while loading
-                      : () {
-                    //printReadingControllersValues();
-                    printNozzleValues();
+                      : () async {
+                    // Validate all fields have values and are greater than last reading
+                    bool isValid = await validateReadings();
+
+                    if (isValid) {
+                      printNozzleValues();
+                    } else {
+                      // If any validation fails, show an error message or handle it as needed
+                      print('Invalid readings. Please check and try again.');
+                    }
                   },
                   child: isLoading
                       ? CircularProgressIndicator() // Show loader

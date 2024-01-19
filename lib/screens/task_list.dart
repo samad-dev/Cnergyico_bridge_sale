@@ -65,7 +65,7 @@ class _TasksState extends State<Tasks> {
     var pre = prefs.getString("privilege");
     user_privilege=pre;
     final response = await http.get(
-        Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/inspector_task.php?key=03201232927&id=$id&pre=$pre'));
+        Uri.parse('http://151.106.17.246:8080/bycobridgeApis/get/inspection/inspector_task.php?key=03201232927&id=$id&pre=$pre'));
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       setState(() {
@@ -80,7 +80,7 @@ class _TasksState extends State<Tasks> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     var pre = prefs.getString("privilege");
-    final response = await http.get(Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_spec_dealer.php?key=03201232927&dealer_id=$dealer_id'));
+    final response = await http.get(Uri.parse('http://151.106.17.246:8080/bycobridgeApis/get/get_spec_dealer.php?key=03201232927&dealer_id=$dealer_id'));
 
     if (response.statusCode == 200) {
       // Parse the response and get TM and ASM data
@@ -104,7 +104,7 @@ class _TasksState extends State<Tasks> {
   void sendRequestReschedule(var taskId,String oldDate)async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
-    final apiUrl = "http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/task_reschedule.php";
+    final apiUrl = "http://151.106.17.246:8080/bycobridgeApis/update/inspection/task_reschedule.php";
     final data = {
       "user_id": id,
       "task_id": taskId,
@@ -147,7 +147,7 @@ class _TasksState extends State<Tasks> {
   void sendRequestTransfer(var taskId,var transferid)async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
-    final apiUrl = "http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/transfer_task.php";
+    final apiUrl = "http://151.106.17.246:8080/bycobridgeApis/update/inspection/transfer_task.php";
     final data = {
       "user_id": id,
       "task_id": taskId,
@@ -219,7 +219,7 @@ class _TasksState extends State<Tasks> {
     }
   }
   Future<void> ISIN(String d_lat,String d_lng,String i_lat,String i_lng,dealer_name,dealer_id,id) async {
-    final String apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/inspector_checkin.php?key=03201232927&i_lat=$i_lat&i_lng=$i_lng&d_lat=$d_lat&d_lng=$d_lng';
+    final String apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/get/inspection/inspector_checkin.php?key=03201232927&i_lat=$i_lat&i_lng=$i_lng&d_lat=$d_lat&d_lng=$d_lng';
     try {
       final response = await http.get(Uri.parse(apiUrl));
 
@@ -796,6 +796,8 @@ class _TasksState extends State<Tasks> {
                                               dealerlat= dealerlatlng[0];
                                               dealerlng = dealerlatlng[1];
                                               ISIN(dealerlat,dealerlng,inspectorlat,inspectorlng,dealer_name,dealer_id,id);
+                                              //Navigator.push(context,
+                                              //  MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: id,dealer_name: dealer_name)),);
 
                                             },
                                           ),

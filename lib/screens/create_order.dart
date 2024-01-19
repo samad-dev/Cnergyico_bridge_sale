@@ -87,7 +87,7 @@ class _CreateOrderState extends State<Create_Order> {
     // Print the JSON string
     print(jsonString);
     print("${id}||${_mySelection}||${_site}||${tlController.text.toString()}||${sum}||${legder_balance}");
-    var request = http.MultipartRequest('POST', Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/create/create_dealers_orders.php'));
+    var request = http.MultipartRequest('POST', Uri.parse('http://151.106.17.246:8080/bycobridgeApis/create/create_dealers_orders.php'));
     if (_site == "Self") {
       if (tlController.text.isNotEmpty) {
         request.fields.addAll({
@@ -179,7 +179,7 @@ class _CreateOrderState extends State<Create_Order> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     final response = await http.get(Uri.parse(
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_containers_sizes.php?key=03201232927&id=1'));
+        'http://151.106.17.246:8080/bycobridgeApis/get/get_containers_sizes.php?key=03201232927&id=1'));
 
     if (response.statusCode == 200) {
       print("Hello world");
@@ -200,7 +200,7 @@ class _CreateOrderState extends State<Create_Order> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     var pre = prefs.getString("privilege");
-    final response = await http.get(Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/outlet_count.php?key=03201232927&id=$id&pre=$pre'));
+    final response = await http.get(Uri.parse('http://151.106.17.246:8080/bycobridgeApis/get/inspection/outlet_count.php?key=03201232927&id=$id&pre=$pre'));
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       List<String> sizeList = data.map((item) => item['name'].toString()).toList();
@@ -221,7 +221,7 @@ class _CreateOrderState extends State<Create_Order> {
     account = prefs.getString("account");
 
     final url = Uri.parse(
-        "http://151.106.17.246:8080/OMCS-CMS-APIS/get/dealers_products.php?key=03201232927&dealer_id=$Dealer_id");
+        "http://151.106.17.246:8080/bycobridgeApis/get/dealers_products.php?key=03201232927&dealer_id=$Dealer_id");
 
     try {
       final response = await http.get(url);

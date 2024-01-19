@@ -45,7 +45,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
   /*
   Future<List<Map<String, dynamic>>> get_dealer_nozzles(String dealerId) async {
     final apiUrl =
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/dealers_dispensor_nozles.php?key=03201232927&dealer_id=$dealerId';
+        'http://151.106.17.246:8080/bycobridgeApis/get/dealers_dispensor_nozles.php?key=03201232927&dealer_id=$dealerId';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -69,7 +69,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
   */
   Future<List<Map<String, dynamic>>> fetchData(dealer_id) async {
     final String apiUrl =
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/dealers_dispensor_nozles.php?key=03201232927&dealer_id=$dealer_id';
+        'http://151.106.17.246:8080/bycobridgeApis/get/dealers_dispensor_nozles.php?key=03201232927&dealer_id=$dealer_id';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -106,7 +106,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var user_id = prefs.getString("Id");
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/create/dealers_reconcilation.php';
+    final apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/create/dealers_reconcilation.php';
 
     try {
       final response = await http.post(
@@ -139,7 +139,7 @@ class _StockReconcilePageState extends State<StockReconcilePage> {
   Future<void> sendstatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var user_id = prefs.getString("Id");
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
+    final apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/update/inspection/update_inspections_status.php';
 
     try {
       final response = await http.post(

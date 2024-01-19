@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:hascol_inspection/screens/Pcc_Header.dart';
+import 'package:hascol_inspection/screens/quality_check.dart';
+import 'package:hascol_inspection/screens/quantity_check.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:hascol_inspection/screens/Measurement&Pricing.dart';
@@ -12,6 +15,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:signature/signature.dart';
 import '../utils/constants.dart';
+import 'EHSForm.dart';
+import 'Newform/FuelDecantationHeader.dart';
+import 'Newform/OMC_VisitingForm.dart';
+import 'Newform/Visit Report.dart';
+import 'PCC.dart';
 import 'SalesPerformance.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
@@ -45,12 +53,15 @@ class TaskDashboardState extends State<TaskDashboard> {
   List<Map<String, String>> resultList = [];
   int zeroCount = 0;
   int oneCount = 0;
+  int totalCount =0;
   TextEditingController commentController = TextEditingController();
   late String signatureImagePath;
+  List<Map<String, dynamic>> formList = [];
+  String? formId;
 
-  Future<List<Map<String, String>>> fetchData(String dealerId, String inspectionId) async {
+  Future<List<Map<String, dynamic>>> fetchData(String dealerId, String inspectionId) async {
     final apiUrl =
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_dealers_inspections.php?key=03201232927&id=$dealerId';
+        'http://151.106.17.246:8080/bycobridgeApis/get/get_dealers_inspections.php?key=03201232927&id=$dealerId';
 
     final response = await http.get(Uri.parse(apiUrl));
 
@@ -64,23 +75,27 @@ class TaskDashboardState extends State<TaskDashboard> {
         for (int i = 0; i < data.length; i++) {
           // Check if the current item's inspection id matches the desired inspectionId
           if (data[i]['id'] == inspectionId) {
-            resultList.add({
-              'Sales Status': data[i]['sales_status'],
-              'Measurement Status': data[i]['measurement_status'],
-              'Wet Stock Status': data[i]['wet_stock_status'],
-              'Dispensing Status': data[i]['dispensing_status'],
-              'Stock Variations Status': data[i]['stock_variations_status'],
-              'Inspection': data[i]['inspection'],
-            });
+
+            // Parse "form_json" and convert it to the desired format
+            List<dynamic> formJsonList = json.decode(data[i]['form_json']);
+            for (var form in formJsonList) {
+              formList.add({
+                'form_id': form['form_id'],
+                'form_name': form['form_name'],
+                'status': form['status'].toString(),
+              });
+            }
           }
         }
+        totalCount = formList.length;
+        zeroCount = formList.where((form) => form['status'] == '0').length;
+        oneCount = formList.where((form) => form['status'] == '1').length;
 
-        List<String> keys = resultList[0].keys.cast<String>().toList();
-        oneCount = resultList[0].values.where((value) => value == '1').length;
-        zeroCount = resultList[0].values.where((value) => value == '0').length;
-        print("Hello world: $resultList");
-        print("Number of Status: ${keys.length}");
-        print("Hello person: $dealer_id, $inspectionid, $dealer_name");
+        print('Total Count: $totalCount');
+        print('Zero Count: $zeroCount');
+        print('One Count: $oneCount');
+        print("form list: $formList");
+        print(dealerId);
       });
 
       return resultList;
@@ -89,7 +104,7 @@ class TaskDashboardState extends State<TaskDashboard> {
     }
   }
   Future<void> postSignatureImages(String dealerSignaturePath, String representerSignaturePath) async {
-    String apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/task_response.php';
+    String apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/update/inspection/task_response.php';
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     // Use null-aware operator to provide a default value if 'Id' is null
@@ -135,6 +150,124 @@ class TaskDashboardState extends State<TaskDashboard> {
       print('Exception while posting signatures and postData: $error');
     }
   }
+  List<Widget> buildTaskCards(List<Map<String, dynamic>> apiResponse) {
+    return apiResponse.map((task) {
+      return GestureDetector(
+        onTap: () {
+          formId = task['form_id'];
+          if (task['status'] != '2') {
+            if (task['form_name'] == "Inspection") {
+              Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                  Inspection(dealer_id: dealer_id,
+                      inspectionid: inspectionid!,
+                      dealer_name: dealer_name!,
+                      formId: formId),),);
+            }
+            else if (task['form_name'] == "EHS Audit") {
+              Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                  EHSForm(dealer_id: dealer_id,
+                      inspectionid: inspectionid!,
+                      dealer_name: dealer_name!,
+                      formId: formId),),);
+            }
+            else if (task['form_name'] == "PCC") {
+              Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                  PCCFormHeader(dealer_id: dealer_id,
+                      inspectionid: inspectionid!,
+                      dealer_name: dealer_name!,
+                      formId: formId),),);
+            }
+            else if (task['form_name'] == "Stock Reconciliation [Tank Reading]") {
+              /*
+              Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                  StockReconcileTankPage(dealer_id: dealer_id,
+                      inspectionid: inspectionid!,
+                      dealer_name: dealer_name!,
+                      formId: formId!),),);
+               */
+              /*
+              Navigator.push(context, MaterialPageRoute(builder: (context) => OMCVisitingForm(),),);
+              */
+              /*
+              Navigator.push(context, MaterialPageRoute(builder: (context) => VisitReportPage(),),);
+               */
+              Navigator.push(context, MaterialPageRoute(builder: (context) => FuelDecantationHeader(dealer_id: dealer_id, inspectionid: inspectionid!, dealer_name: dealer_name!, formId: formId!),),);
+            }
+            else if (task['form_name'] == "Stock Reconciliation [Nozzle Reading]") {
+              Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                  StockReconcilePage(dealer_id: dealer_id,
+                      inspectionid: inspectionid!,
+                      dealer_name: dealer_name!,
+                      formId: formId!),),);
+            }
+            else if (task['form_name'] == "Site_Completion_Reports") {
+              //Navigator.push(context, MaterialPageRoute(builder: (context) => StockReconcilePage(dealer_id: dealer_id, inspectionid: inspectionid!, dealer_name: dealer_name!,),),);
+            }
+            else if (task['form_name'] == "Training_Performance") {
+              //Navigator.push(context, MaterialPageRoute(builder: (context) => StockReconcilePage(dealer_id: dealer_id, inspectionid: inspectionid!, dealer_name: dealer_name!,),),);
+            }
+            else if (task['form_name'] == "Price") {
+              Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                  MPricing(dealer_id: dealer_id,
+                      inspectionid: inspectionid!,
+                      dealer_name: dealer_name!,
+                      formId: formId!),),);
+            }
+            else if (task['form_name'] == "Quantity") {
+              Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                  Quantity_check(dealer_id: dealer_id,
+                      inspectionid: inspectionid!,
+                      dealer_name: dealer_name!,
+                      formId: formId!),),);
+            }
+            else if (task['form_name'] == "Quality") {
+              Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                  Quality_check(dealer_id: dealer_id,
+                      inspectionid: inspectionid!,
+                      dealer_name: dealer_name!,
+                      formId: formId),),);
+            }
+            else if (task['form_name'] == "Lube_Test") {
+              //Navigator.push(context, MaterialPageRoute(builder: (context) => StockReconcilePage(dealer_id: dealer_id, inspectionid: inspectionid!, dealer_name: dealer_name!,),),);
+            }
+          }
+        },
+        child: Card(
+          elevation: 4.0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0), // Smaller border radius
+          ),
+          color: task['status'] == '1' ? Constants.secondary_color : Colors.white,
+          child: Container(
+            width: MediaQuery.of(context).size.width / 4.0, // Smaller width for the card
+            height: MediaQuery.of(context).size.width / 4.0, // Smaller height for the card
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Image.asset(
+                  //   task['imagePath'],
+                  //   height: 50.0, // Larger height for the image
+                  //   color: task['status'] == '1' ? Colors.white : null,
+                  // ),
+                  SizedBox(height: 4.0), // Adjust spacing as needed
+                  Text(
+                    task['form_name'],
+                    style: TextStyle(
+                      fontSize: 12.0, // Even smaller font size for the heading
+                      fontWeight: FontWeight.bold,
+                      color: task['status'] == '1' ? Colors.white : null,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }).toList();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -160,8 +293,8 @@ class TaskDashboardState extends State<TaskDashboard> {
             height: screenWidth / 2,
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/Puma_Background.jpg'), // Replace with your image path
-                fit: BoxFit.cover,
+                image: AssetImage('assets/images/Byco_Background.jpeg'), // Replace with your image path
+                fit: BoxFit.fill,
               ),
             ),
 
@@ -213,10 +346,6 @@ class TaskDashboardState extends State<TaskDashboard> {
             child: Container(
               decoration: BoxDecoration(
                 color: Constants.secondary_color,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(40.0),
-                  topRight: Radius.circular(40.0),
-                ),
               ),
               child: Column(
                 children: [
@@ -234,7 +363,7 @@ class TaskDashboardState extends State<TaskDashboard> {
                                 Row(
                                   children: [
                                     Text(
-                                      '6',
+                                      '$totalCount',
                                       style: TextStyle(
                                         color:Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -341,376 +470,16 @@ class TaskDashboardState extends State<TaskDashboard> {
                       ),
                     ),
                     child: Padding(
-                      padding: EdgeInsets.all(20.0),
+                      padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width/20),
                       child: Column(
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: (){
-                                    if (resultList.isNotEmpty && resultList[0]['Sales Status'] == '1') {
-                                      print('Measurement Status is 1, action not allowed');
-                                    }
-                                    else {
-                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => SalesPerformance(dealer_id: dealer_id,inspectionid: inspectionid!,dealer_name: dealer_name!,)));
-                                    }
-                                    },
-                                  child: Card(
-                                    elevation: 10.0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                    ),
-                                    color: resultList.isNotEmpty && resultList[0]['Sales Status'] == '1'
-                                        ? Constants.secondary_color
-                                        : Colors.white, // Change card color based on Measurement Status
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                                      child: Column(
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/performance-award.png',
-                                            height: 50.0,
-                                            color: resultList.isNotEmpty && resultList[0]['Sales Status'] == '1'
-                                                ? Colors.white
-                                                : null,
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(10.0),
-                                            child: Column(
-                                              children: [
-                                                Text(
-                                                  'Sales',
-                                                  style: TextStyle(
-                                                    fontSize: MediaQuery.of(context).size.width/27,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: resultList.isNotEmpty && resultList[0]['Sales Status'] == '1'
-                                                        ? Colors.white
-                                                        : null,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Performance',
-                                                  style: TextStyle(
-                                                    fontSize: MediaQuery.of(context).size.width/27,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: resultList.isNotEmpty && resultList[0]['Sales Status'] == '1'
-                                                        ? Colors.white
-                                                        : null,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    // Check if Measurement Status is 1
-                                    if (resultList.isNotEmpty && resultList[0]['Measurement Status'] == '1') {
-                                      print('Measurement Status is 1, action not allowed');
-                                    } else {
-                                      // Measurement Status is not 1, navigate to MPricing
-                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => MPricing(dealer_id: dealer_id,inspectionid: inspectionid!,dealer_name: dealer_name!,),));
-                                    }
-                                  },
-                                  child: Card(
-                                    elevation: 4.0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                    ),
-                                    color: resultList.isNotEmpty && resultList[0]['Measurement Status'] == '1'
-                                        ? Constants.secondary_color
-                                        : Colors.white, // Change color based on Measurement Status
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                                      child: Column(
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/efficiency.png',
-                                            height: 50.0,
-                                            color: resultList.isNotEmpty && resultList[0]['Measurement Status'] == '1'
-                                                ? Colors.white
-                                                : null,
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(10.0),
-                                            child: Column(
-                                              children: [
-                                                Text(
-                                                  'Measurement',
-                                                  style: TextStyle(
-                                                    fontSize: MediaQuery.of(context).size.width / 27,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: resultList.isNotEmpty && resultList[0]['Measurement Status'] == '1'
-                                                        ? Colors.white
-                                                        : null,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '& Pricing',
-                                                  style: TextStyle(
-                                                    fontSize: MediaQuery.of(context).size.width / 27,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: resultList.isNotEmpty && resultList[0]['Measurement Status'] == '1'
-                                                        ? Colors.white
-                                                        : null,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              )
-                            ],
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: (){
-                                    if (resultList.isNotEmpty && resultList[0]['Wet Stock Status'] == '1') {
-                                      print('Measurement Status is 1, action not allowed');
-                                    }
-                                    else {
-                                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => StockReconcileTankPage(dealer_id: dealer_id,inspectionid: inspectionid!,dealer_name: dealer_name!)));
-                                    }
-                                    },
-                                  child: Card(
-                                    elevation: 4.0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                    ),
-                                    color: resultList.isNotEmpty && resultList[0]['Wet Stock Status'] == '1'
-                                        ? Constants.secondary_color
-                                        : Colors.white, // Change card color based on Measurement Status
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                                      child: Column(
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/oil-tank.png',
-                                            height: 50.0,
-                                            color: resultList.isNotEmpty && resultList[0]['Wet Stock Status'] == '1'
-                                                ? Colors.white
-                                                : null, // Set color to white if Measurement Status is 1
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(10.0),
-                                            child: Column(
-                                              children: [
-                                                Text(
-                                                  'Wet Stock',
-                                                  style: TextStyle(
-                                                    fontSize: MediaQuery.of(context).size.width/27,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: resultList.isNotEmpty && resultList[0]['Wet Stock Status'] == '1'
-                                                        ? Colors.white
-                                                        : null,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Management',
-                                                  style: TextStyle(
-                                                    fontSize: MediaQuery.of(context).size.width/27,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: resultList.isNotEmpty && resultList[0]['Wet Stock Status'] == '1'
-                                                        ? Colors.white
-                                                        : null,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: (){
-                                    if (resultList.isNotEmpty && resultList[0]['Dispensing Status'] == '1') {
-                                      print('Measurement Status is 1, action not allowed');
-                                    }
-                                    else {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => StockReconcilePage(dealer_id: dealer_id,inspectionid: inspectionid!,dealer_name: dealer_name!)),
-                                      );
-                                    }
-                                    },
-                                  child: Card(
-                                    elevation: 4.0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                    ),
-                                    color: resultList.isNotEmpty && resultList[0]['Dispensing Status'] == '1'
-                                        ? Constants.secondary_color
-                                        : Colors.white, // Change card color based on Measurement Status
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                                      child: Column(
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/electric-meter.png',
-                                            height: 50.0,
-                                            color: resultList.isNotEmpty && resultList[0]['Dispensing Status'] == '1'
-                                                ? Colors.white
-                                                : null, // Set color to white if Measurement Status is 1
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(10.0),
-                                            child: Column(
-                                              children: [
-                                                Text(
-                                                  'Dispensing Unit',
-                                                  style: TextStyle(
-                                                    fontSize: MediaQuery.of(context).size.width/27,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: resultList.isNotEmpty && resultList[0]['Dispensing Status'] == '1'
-                                                        ? Colors.white
-                                                        : null,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Meter Reading',
-                                                  style: TextStyle(
-                                                    fontSize: MediaQuery.of(context).size.width/27,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: resultList.isNotEmpty && resultList[0]['Dispensing Status'] == '1'
-                                                        ? Colors.white
-                                                        : null,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              )
-                            ],
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  child: Card(
-                                    elevation: 4.0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                    ),
-                                    color: resultList.isNotEmpty && resultList[0]['Stock Variations Status'] == '1'
-                                        ? Constants.secondary_color
-                                        : Colors.white,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                                      child: Column(
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/report.png',
-                                            height: 50.0,
-                                            color: resultList.isNotEmpty && resultList[0]['Stock Variations Status'] == '1'
-                                                ? Colors.white
-                                                : null,
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(10.0),
-                                            child: Text(
-                                              'Stock Variation',
-                                              style: TextStyle(
-                                                fontSize: MediaQuery.of(context).size.width/27,
-                                                fontWeight: FontWeight.bold,
-                                                color: resultList.isNotEmpty && resultList[0]['Stock Variations Status'] == '1'
-                                                    ? Colors.white
-                                                    : null,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  onTap: (){
-                                    if (resultList.isNotEmpty && resultList[0]['Stock Variations Status'] == '1') {
-                                      print('Measurement Status is 1, action not allowed');
-                                    }
-                                    else {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) =>  StockVariation(dealer_id: dealer_id,inspectionid: inspectionid!,dealer_name: dealer_name!)),
-                                      );
-                                    }
-
-                                  },
-                                ),
-                              ),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap:(){
-                                    if (resultList.isNotEmpty && resultList[0]['Inspection'] == '2') {
-                                      print('Measurement Status is 1, action not allowed');
-                                    }
-                                    else {
-                                      Navigator.push(context,
-                                        MaterialPageRoute(builder: (context) => Inspection(dealer_id: dealer_id,inspectionid: inspectionid!,dealer_name: dealer_name!)),);
-                                    }
-                                  },
-                                  child: Card(
-                                    elevation: 4.0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                    ),
-                                    color: resultList.isNotEmpty && resultList[0]['Inspection'] == '1'
-                                        ? Constants.secondary_color
-                                        : Colors.white, // Change card color based on Measurement Status
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                                      child: Column(
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/inspection.png',
-                                            height: 50.0,
-                                            color: resultList.isNotEmpty && resultList[0]['Inspection'] == '1'
-                                                ? Colors.white
-                                                : null, // Set color to white if Measurement Status is 1
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(10.0),
-                                            child: Text(
-                                              'Inspection',
-                                              style: TextStyle(
-                                                fontSize: MediaQuery.of(context).size.width/27,
-                                                fontWeight: FontWeight.bold,
-                                                color: resultList.isNotEmpty && resultList[0]['Inspection'] == '1'
-                                                    ? Colors.white
-                                                    : null,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              )
-                            ],
+                          GridView.count(
+                            shrinkWrap: true,
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 4.0, // Adjust as needed
+                            crossAxisSpacing: 4.0, // Adjust as needed
+                            childAspectRatio: 1.4, // Ensures equal width and height for each card
+                            children: buildTaskCards(formList),
                           ),
                           SizedBox(height: 20,),
                           Container(
@@ -718,7 +487,7 @@ class TaskDashboardState extends State<TaskDashboard> {
                             height: 45,
                             child: TextButton(
                               onPressed: () {
-                                if (oneCount == 6) {
+                                if (oneCount == totalCount) {
                                   showDialog(
                                     context: context,
                                     builder: (BuildContext context) {
@@ -843,7 +612,6 @@ class TaskDashboardState extends State<TaskDashboard> {
                               ),
                             ),
                           )
-
                         ],
                       ),
                     ),

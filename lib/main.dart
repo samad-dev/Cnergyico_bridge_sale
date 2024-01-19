@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hascol_inspection/screens/home.dart';
 import 'package:hascol_inspection/screens/login.dart';
+import 'package:hascol_inspection/utils/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 void main() {
@@ -42,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void initializeVideoController() {
-    _controller = VideoPlayerController.asset('assets/images/puma_video.mp4')
+    _controller = VideoPlayerController.asset('assets/images/P2P_Track.mp4')
       ..initialize().then((_) {
         // Ensure the first frame is shown
         if (mounted) {
@@ -56,7 +57,7 @@ class _SplashScreenState extends State<SplashScreen> {
   /*
   void initializeVideoController() {
     _controller = VideoPlayerController.networkUrl(
-        Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/vedio/landing.mp4'))
+        Uri.parse('http://151.106.17.246:8080/bycobridgeApis/vedio/landing.mp4'))
       ..initialize().then((_) {
         // Ensure the first frame is shown
         if (mounted) {
@@ -128,14 +129,14 @@ class _SplashScreenState extends State<SplashScreen> {
                   // Align children at the top
                   children: <Widget>[
                     Container(
-                      child: SvgPicture.asset(
-                        'assets/images/puma_logo.svg',), // Replace with your image asset
+                      child: Image.asset(
+                        'assets/images/channels4_profile.png',width:100), // Replace with your image asset
                     ),
                   ],
                 ),
                 SizedBox(height: 10,),
                 Text(
-                  'Welcome to Puma',
+                  'Welcome to',
                   style: GoogleFonts.raleway(
                     textStyle: Theme
                         .of(context)
@@ -182,12 +183,12 @@ class _SplashScreenState extends State<SplashScreen> {
                                           fontWeight: FontWeight.w700,
                                           fontStyle: FontStyle.normal,
                                           fontSize: 16,
-                                          color: Colors.white,
+                                          color: Constants.secondary_color,
                                         ),
                                       ),
                                     ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xffe81329),
+                                      backgroundColor: Constants.primary_color,
                                       shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
                                               30.0)),

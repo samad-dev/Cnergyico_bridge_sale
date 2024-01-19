@@ -54,7 +54,7 @@ class StockVariationState extends State<StockVariation> {
     int book_stock = (total_product_available_for_sale - numbers[3]);
     int gain_loss = (numbers[5] - book_stock);
 
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/create/create_dealer_stock_variations.php';
+    final apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/create/create_dealer_stock_variations.php';
 
     try {
       final response = await http.post(
@@ -88,7 +88,7 @@ class StockVariationState extends State<StockVariation> {
   Future<void> sendstatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var user_id = prefs.getString("Id");
-    final apiUrl = 'http://151.106.17.246:8080/OMCS-CMS-APIS/update/inspection/update_inspections_status.php';
+    final apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/update/inspection/update_inspections_status.php';
 
     try {
       final response = await http.post(
@@ -140,7 +140,7 @@ class StockVariationState extends State<StockVariation> {
 
   Future<List<Map<String, dynamic>>> TargetSales(String dealerId) async {
     final apiUrl =
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_dealer_monthly_target.php?key=03201232927&dealer_id=$dealerId';
+        'http://151.106.17.246:8080/bycobridgeApis/get/get_dealer_monthly_target.php?key=03201232927&dealer_id=$dealerId';
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -155,6 +155,7 @@ class StockVariationState extends State<StockVariation> {
               PMGID=filteredData[index]['product_id'];
             }
             if(filteredData[index]['name']=='HSD'){
+              hasHSD = true;
               HSDID=filteredData[index]['product_id'];
             }
           }

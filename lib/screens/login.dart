@@ -34,7 +34,7 @@ Future<void> login(BuildContext context) async {
     return;
   }
 
-  final url = Uri.parse('http://151.106.17.246:8080/OMCS-CMS-APIS/get/inspection/login.php?key=03201232927&username=$email&password=$password');
+  final url = Uri.parse('http://151.106.17.246:8080/bycobridgeApis/get/department_user_login.php?key=03201232927&username=$email&password=$password');
   final response = await http.get(url);
   if (response.statusCode == 200) {
     final jsons = json.decode(response.body);
@@ -59,6 +59,13 @@ Future<void> login(BuildContext context) async {
       prefs.setString("allowed_actions", jsons[0]["allowed_actions"].toString());
       prefs.setString("independent_exist", jsons[0]["independent_exist"].toString());
       prefs.setString("image", jsons[0]["image"].toString());
+      prefs.setString("role", jsons[0]["role"].toString());
+      prefs.setString("department_id", jsons[0]["department_id"].toString());
+      prefs.setString("is_parent", jsons[0]["is_parent"].toString());
+      prefs.setString("parent_id", jsons[0]["parent_id"].toString());
+      prefs.setString("department_name", jsons[0]["department_name"].toString());
+      prefs.setString("parent_user_name", jsons[0]["parent_user_name"].toString());
+      prefs.setString("parent_user_id", jsons[0]["parent_user_id"].toString());
 
       Navigator.pushReplacement<void, void>(context,MaterialPageRoute<void>(builder: (BuildContext context) => Home(),),);
     } else {
@@ -109,7 +116,7 @@ class _LoginState extends State<Login> {
                 Container(
                   alignment: Alignment.topLeft,
                   padding: EdgeInsets.only(left: 8.0),
-                  child: SvgPicture.asset('assets/images/puma_logo2.svg'), // Replace with your image asset
+                  child: Image.asset('assets/images/channels4_profile.png',width:100), // Replace with your image asset
                 ),
                 SizedBox(height: 60,),
                 Column(
@@ -196,7 +203,7 @@ class _LoginState extends State<Login> {
                             fontStyle: FontStyle.normal,
                           ),
                           focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(width: 2, color: Colors.green.shade700),
+                            borderSide: BorderSide(width: 2, color: Constants.primary_color),
                           ),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(width: 2, color: Colors.grey),
@@ -236,7 +243,7 @@ class _LoginState extends State<Login> {
                             borderSide: BorderSide(width:2,color: Colors.grey),
                           ),
                           focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(width:2,color: Colors.green.shade700), // Color of the border
+                            borderSide: BorderSide(width:2,color: Constants.primary_color), // Color of the border
                           ),
                         ),
                       ),
@@ -288,12 +295,12 @@ class _LoginState extends State<Login> {
                                     fontWeight: FontWeight.w700,
                                     fontStyle: FontStyle.normal,
                                     fontSize: 16,
-                                    color: Colors.white
+                                    color: Constants.secondary_color
                                   ),
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xffe81329),
+                                backgroundColor: Constants.primary_color,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
                               ),
                               onPressed: () {
@@ -320,7 +327,7 @@ class _LoginState extends State<Login> {
                       ),
                     ),
                     child: Text(
-                      'New to Puma Dealership? Register here ',
+                      'New to cynergyco Dealership? Register here ',
                       style: GoogleFonts.poppins(
                         textStyle: Theme.of(context).textTheme.displayLarge,
                         fontSize: 14,
