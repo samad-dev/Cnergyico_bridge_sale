@@ -75,7 +75,7 @@ class CasualVisitPageState extends State<CasualVisitPage> {
   @override
   void initState() {
     super.initState();
-
+    print(dealer_id);
   }
 
   @override

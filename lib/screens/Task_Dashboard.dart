@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:hascol_inspection/screens/Newform/NStockReconciliation.dart';
 import 'package:hascol_inspection/screens/Pcc_Header.dart';
 import 'package:hascol_inspection/screens/quality_check.dart';
 import 'package:hascol_inspection/screens/quantity_check.dart';
@@ -155,7 +156,7 @@ class TaskDashboardState extends State<TaskDashboard> {
       return GestureDetector(
         onTap: () {
           formId = task['form_id'];
-          if (task['status'] != '2') {
+          if (task['status'] != '1') {
             if (task['form_name'] == "Inspection") {
               Navigator.push(context, MaterialPageRoute(builder: (context) =>
                   Inspection(dealer_id: dealer_id,
@@ -193,12 +194,11 @@ class TaskDashboardState extends State<TaskDashboard> {
                */
               Navigator.push(context, MaterialPageRoute(builder: (context) => FuelDecantationHeader(dealer_id: dealer_id, inspectionid: inspectionid!, dealer_name: dealer_name!, formId: formId!),),);
             }
-            else if (task['form_name'] == "Stock Reconciliation [Nozzle Reading]") {
-              Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                  StockReconcilePage(dealer_id: dealer_id,
-                      inspectionid: inspectionid!,
-                      dealer_name: dealer_name!,
-                      formId: formId!),),);
+            else if (task['form_name'] == "Fuel Decantation Audit") {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => FuelDecantationHeader(dealer_id: dealer_id, inspectionid: inspectionid!, dealer_name: dealer_name!, formId: formId!),),);
+            }
+            else if (task['form_name'] == "Stock Reconciliation") {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => NStockReconciliation(dealer_id: dealer_id, inspectionid: inspectionid!, dealer_name: dealer_name!, formId: formId!),),);
             }
             else if (task['form_name'] == "Site_Completion_Reports") {
               //Navigator.push(context, MaterialPageRoute(builder: (context) => StockReconcilePage(dealer_id: dealer_id, inspectionid: inspectionid!, dealer_name: dealer_name!,),),);

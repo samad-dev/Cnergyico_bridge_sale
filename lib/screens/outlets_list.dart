@@ -74,6 +74,22 @@ class _OutletsState extends State<Outlets> {
       }
     });
   }
+  Future<List<dynamic>> GetLedger(String dealerId) async {
+    final String apiUrl = 'http://151.106.17.246:8080/bycobridgeApis/get/get_dealer_ledger_log.php?key=03201232927&dealer_id=$dealerId';
+    final response = await http.get(
+      Uri.parse('$apiUrl'),
+    );
+
+    if (response.statusCode == 200) {
+      // If the server returns a 200 OK response, parse the JSON
+      List<dynamic> data = json.decode(response.body);
+      return data;
+    } else {
+      // If the server did not return a 200 OK response,
+      // throw an exception.
+      throw Exception('Failed to load data');
+    }
+  }
   Future<void> _getLocation() async {
     try {
       Location location = Location();
@@ -144,9 +160,12 @@ class _OutletsState extends State<Outlets> {
       return Scaffold(
         backgroundColor: Color(0xffffffff),
         appBar: AppBar(
-          automaticallyImplyLeading: false,
+          automaticallyImplyLeading: true,
           backgroundColor: Constants.primary_color,
           elevation: 10,
+          iconTheme: IconThemeData(
+            color: Colors.white,
+          ),
           title: Text(
             'Outlets',
             style: GoogleFonts.montserrat(
@@ -158,7 +177,7 @@ class _OutletsState extends State<Outlets> {
         ),
         body: SingleChildScrollView(
             child: Container(
-          padding: EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               child: Column(
                 children: [
                   Card(
@@ -188,7 +207,7 @@ class _OutletsState extends State<Outlets> {
                   ),
                   isLoading
                       ? Center(child: CircularProgressIndicator())
-                  : ListView.builder(
+                      : ListView.builder(
                       physics: NeverScrollableScrollPhysics(),
                       scrollDirection: Axis.vertical,
                       shrinkWrap: true,
@@ -204,6 +223,11 @@ class _OutletsState extends State<Outlets> {
                         final sap_no = filteredData[index2]["sap_no"];
                         final name=filteredData[index2]["name"];
                         final co_ordinates = filteredData[index2]['co-ordinates'];
+                        final baseurl = 'http://151.106.17.246:8080/bycobridgeApis/uploads/';
+                        final banner = filteredData[index2]['banner'];
+                        final logo = filteredData[index2]['logo'];
+                        final bannerUrl = Uri.parse('$baseurl$banner');
+                        final logoUrl = Uri.parse('$baseurl$logo');
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4.0),
                           child: Card(
@@ -277,8 +301,8 @@ class _OutletsState extends State<Outlets> {
                                                     children: [
                                                       Container(
                                                         child: Padding(
-                                                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                          child: Icon(Icons.graphic_eq)
+                                                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                            child: Icon(Icons.graphic_eq)
                                                         ),
                                                       ),
                                                     ],
@@ -314,158 +338,132 @@ class _OutletsState extends State<Outlets> {
                                                     children: [
                                                       Container(
                                                         child: Padding(
-                                                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                            child: GestureDetector(
-                                                                child: Text("Details"),
-                                                              onTap: (){
-                                                                showDialog(
-                                                                  context: context,
-                                                                  builder: (BuildContext context) {
-                                                                    return AlertDialog(
-                                                                      title: Text('Details:'),
-                                                                      content: Container(
-                                                                        height: MediaQuery.of(context).size.width/1.5,
-                                                                          width: MediaQuery.of(context).size.width/1.2,
-                                                                          child:
-                                                                          Column(
-                                                                            mainAxisAlignment:MainAxisAlignment.start,
-                                                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                                                            children: [
-                                                                              Text(
-                                                                                'Name: ',
-                                                                                style: GoogleFonts.montserrat(
-                                                                                    fontWeight: FontWeight.w600,
-                                                                                    fontStyle: FontStyle.normal,
-                                                                                    color: Color(0xff12283D),
-                                                                                    fontSize: 16),
-                                                                                maxLines: 1,
-                                                                                overflow: TextOverflow.ellipsis,
-                                                                              ),
-                                                                              Padding(
-                                                                                padding: const EdgeInsets.only(left:12.0),
-                                                                                child: Container(
-                                                                                  width: MediaQuery.of(context).size.width/2,
-                                                                                  child: Text(
-                                                                                    '$name',
-                                                                                    style: GoogleFonts.montserrat(
-                                                                                        fontStyle: FontStyle.normal,
-                                                                                        color: Color(0xff12283D),
-                                                                                        fontSize: 16),
-                                                                                    maxLines: 1,
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              Text(
-                                                                                'location: ',
-                                                                                style: GoogleFonts.montserrat(
-                                                                                    fontWeight: FontWeight.w600,
-                                                                                    fontStyle: FontStyle.normal,
-                                                                                    color: Color(0xff12283D),
-                                                                                    fontSize: 16),
-                                                                                maxLines: 1,
-                                                                                overflow: TextOverflow.ellipsis,
-                                                                              ),
-                                                                              Padding(
-                                                                                padding: const EdgeInsets.only(left:12.0),
-                                                                                child: Container(
-                                                                                  width: MediaQuery.of(context).size.width/1.5,
-                                                                                  child: Text(
-                                                                                    '$location',
-                                                                                    style: GoogleFonts.montserrat(
-                                                                                        fontStyle: FontStyle.normal,
-                                                                                        color: Color(0xff12283D),
-                                                                                        fontSize: 16),
-                                                                                    maxLines: 2,
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                ),
-                                                                              ),
-                                                                              Row(
-                                                                                children: [
-                                                                                  Text(
-                                                                                    'Phone Number : ',
-                                                                                    style: GoogleFonts.montserrat(
-                                                                                        fontWeight: FontWeight.w600,
-                                                                                        fontStyle: FontStyle.normal,
-                                                                                        color: Color(0xff12283D),
-                                                                                        fontSize: 16),
-                                                                                    maxLines: 1,
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                  Text(
-                                                                                    '$contact',
-                                                                                    style: GoogleFonts.montserrat(
-                                                                                        fontStyle: FontStyle.normal,
-                                                                                        color: Color(0xff12283D),
-                                                                                        fontSize: 16),
-                                                                                    maxLines: 1,
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-                                                                              Row(
-                                                                                children: [
-                                                                                  Text(
-                                                                                    'SAP Number : ',
-                                                                                    style: GoogleFonts.montserrat(
-                                                                                        fontWeight: FontWeight.w600,
-                                                                                        fontStyle: FontStyle.normal,
-                                                                                        color: Color(0xff12283D),
-                                                                                        fontSize: 16),
-                                                                                    maxLines: 1,
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                  Text(
-                                                                                    '$sap_no',
-                                                                                    style: GoogleFonts.montserrat(
-                                                                                        fontStyle: FontStyle.normal,
-                                                                                        color: Color(0xff12283D),
-                                                                                        fontSize: 16),
-                                                                                    maxLines: 1,
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-                                                                              Row(
-                                                                                children: [
-                                                                                  Text(
-                                                                                    'Ledger: ',
-                                                                                    style: GoogleFonts.montserrat(
-                                                                                        fontWeight: FontWeight.w600,
-                                                                                        fontStyle: FontStyle.normal,
-                                                                                        color: Color(0xff12283D),
-                                                                                        fontSize: 16),
-                                                                                    maxLines: 1,
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                  Text(
-                                                                                    'Rs.$ledger',
-                                                                                    style: GoogleFonts.montserrat(
-                                                                                        fontStyle: FontStyle.normal,
-                                                                                        color: Color(0xff12283D),
-                                                                                        fontSize: 16),
-                                                                                    maxLines: 1,
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-                                                                            ],
-                                                                          )
+                                                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                          child: GestureDetector(
+                                                            child: Text("Details"),
+                                                            onTap: (){
+                                                              showModalBottomSheet(
+                                                                context: context,
+                                                                shape: RoundedRectangleBorder(
+                                                                  borderRadius: BorderRadius.vertical(top: Radius.circular(30.0)),
+                                                                ),
+                                                                builder: (BuildContext context) {
+                                                                  return Container(
+                                                                    decoration: BoxDecoration(
+                                                                      borderRadius: BorderRadius.only(
+                                                                        topLeft: Radius.circular(30.0),
+                                                                        topRight: Radius.circular(30.0),
                                                                       ),
-                                                                      actions: [
-                                                                        TextButton(
-                                                                          onPressed: () {
-                                                                            Navigator.pop(context); // Close the dialog
-                                                                          },
-                                                                          child: Text('OK'),
+                                                                    ),
+                                                                    child: Column(
+                                                                      mainAxisSize: MainAxisSize.min,
+                                                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                                                      children: <Widget>[
+                                                                        Container(
+                                                                          decoration: BoxDecoration(
+                                                                            borderRadius: BorderRadius.only(
+                                                                              topLeft: Radius.circular(30.0),
+                                                                              topRight: Radius.circular(30.0),
+                                                                            ),
+                                                                            color: Constants.primary_color,
+                                                                          ),
+                                                                          child: Padding(
+                                                                            padding: const EdgeInsets.all(8.0),
+                                                                            child: Column(
+                                                                              children: [
+                                                                                Container(
+                                                                                  decoration: BoxDecoration(
+                                                                                    shape: BoxShape.circle,
+                                                                                    border: Border.all(
+                                                                                      color: Colors.white, // Set the color of the border
+                                                                                      width: 2.0, // Set the width of the border
+                                                                                    ),
+                                                                                  ),
+                                                                                  child: CircleAvatar(
+                                                                                    radius: 30.0,
+                                                                                    backgroundImage: NetworkImage(logoUrl.toString()),
+                                                                                  ),
+                                                                                ),
+                                                                                SizedBox(height: 10.0),
+                                                                                Text(
+                                                                                  '$name',
+                                                                                  style: TextStyle(fontWeight: FontWeight.bold,color: Constants.secondary_color),
+                                                                                  textAlign: TextAlign.center,
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                          width: MediaQuery.of(context).size.width,
+                                                                        ),
+                                                                        SizedBox(height: 5.0),
+                                                                        Padding(
+                                                                          padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 24),
+                                                                          child: Column(
+                                                                            children: [
+                                                                              Row(
+                                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                                children: [
+                                                                                  Icon(FluentIcons.location_12_filled),
+                                                                                  Expanded(
+                                                                                    child: Text(
+                                                                                      ': $location',
+                                                                                      textAlign: TextAlign.start,
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                              SizedBox(height: 5.0),
+                                                                              Row(
+                                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                                                children: [
+                                                                                  Icon(Icons.contact_phone),
+                                                                                  Expanded(
+                                                                                    child: Text(
+                                                                                      ' : $contact',
+                                                                                      textAlign: TextAlign.justify,
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                              SizedBox(height: 5.0),
+                                                                              Row(
+                                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                children: [
+                                                                                  Icon(Icons.confirmation_number),
+                                                                                  Expanded(
+                                                                                    child: Text(
+                                                                                      ' : $sap_no',
+                                                                                      textAlign: TextAlign.justify,
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                              SizedBox(height: 5.0),
+                                                                              Row(
+                                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                children: [
+                                                                                  Icon(Icons.book),
+                                                                                  Expanded(
+                                                                                    child: Text(
+                                                                                      ' : ${NumberFormat.decimalPattern('en').format(int.parse(ledger))} PKR',
+                                                                                      textAlign: TextAlign.justify,
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                              SizedBox(height: 20.0),
+                                                                            ],
+                                                                          ),
                                                                         ),
                                                                       ],
-                                                                    );
-                                                                  },
-                                                                );
-                                                              },
-                                                            ),
+                                                                    ),
+                                                                  );
+                                                                },
+                                                              );
+                                                            },
+                                                          ),
                                                         ),
                                                       ),
                                                     ],
@@ -487,50 +485,243 @@ class _OutletsState extends State<Outlets> {
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
+                                      child: Column(
                                         children: [
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              // Add your button press logic here
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              elevation: 4.0, backgroundColor: Constants.secondary_color, // Set the button color
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(20.0), // Set your preferred border radius here
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              ElevatedButton(
+                                                onPressed: ()async {
+                                                  List<dynamic> ledgerData = await GetLedger(dealer_id);
+
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (BuildContext context) {
+                                                      return AlertDialog(
+                                                        title: Text('Ledger Details'),
+                                                        content: SingleChildScrollView(
+                                                          child: Column(
+                                                            children: [
+                                                              for(int i=0;i<ledgerData.length;i++)
+                                                                Card(
+                                                                  elevation: 10,
+                                                                  color: Color(0xffe9e9e9),//Color(0xffF0F0F0),
+                                                                  child: Container(
+                                                                    child: Padding(
+                                                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                                                      child: Column(
+                                                                        children: [
+                                                                          Row(
+                                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                                            children: [
+
+                                                                              Expanded(
+                                                                                child: Column(
+                                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                  children: [
+                                                                                    Row(
+                                                                                      children: [
+                                                                                        Expanded(
+                                                                                          child:
+                                                                                          Padding(
+                                                                                            padding: const EdgeInsets.only(left: 8.0),
+                                                                                            child: Column(
+                                                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                              children: [
+                                                                                                Container(
+                                                                                                  padding: EdgeInsets.only(top:12),
+                                                                                                  width: MediaQuery.of(context).size.width/2.37,
+                                                                                                  child: Text(
+                                                                                                    'Update Ledger: ${ledgerData[i]['new_ledger']}',
+                                                                                                    style: GoogleFonts.montserrat(
+                                                                                                        fontWeight: FontWeight.w600,
+                                                                                                        fontStyle: FontStyle.normal,
+                                                                                                        color: Color(0xff12283D),
+                                                                                                        fontSize: 16),
+                                                                                                    maxLines: 1,
+                                                                                                    overflow: TextOverflow.ellipsis,
+                                                                                                  ),
+                                                                                                ),
+                                                                                              ],
+                                                                                            ),
+                                                                                          ),
+                                                                                        ),
+                                                                                      ],
+                                                                                    ),
+                                                                                    Row(
+                                                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                                                                      children: [
+                                                                                        Padding(
+                                                                                          padding: const EdgeInsets.only(left: 8.0),
+                                                                                          child: Column(
+                                                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                            children: [
+                                                                                              Container(
+                                                                                                width: MediaQuery.of(context).size.width/1.8,
+                                                                                                child: Text(
+                                                                                                  'Time: ${ledgerData[i]['datetime']}',
+                                                                                                  style: GoogleFonts.montserrat(
+                                                                                                      fontWeight: FontWeight.w200,
+                                                                                                      fontStyle: FontStyle.normal,
+                                                                                                      color: Colors.black54,
+                                                                                                      fontSize: 12),
+                                                                                                  maxLines: 2,
+                                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                                ),
+                                                                                              ),
+                                                                                            ],
+                                                                                          ),
+                                                                                        ),
+
+                                                                                      ],
+                                                                                    ),
+                                                                                    Row(
+                                                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                                                                      children: [
+                                                                                        Padding(
+                                                                                          padding: const EdgeInsets.only(left: 8.0),
+                                                                                          child: Column(
+                                                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                            children: [
+                                                                                              Container(
+                                                                                                width: MediaQuery.of(context).size.width/1.8,
+                                                                                                child: Text(
+                                                                                                  'Doc No: ${ledgerData[i]['doc_no']}',
+                                                                                                  style: GoogleFonts.montserrat(
+                                                                                                      fontWeight: FontWeight.w200,
+                                                                                                      fontStyle: FontStyle.normal,
+                                                                                                      color: Colors.black54,
+                                                                                                      fontSize: 12),
+                                                                                                  maxLines: 2,
+                                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                                ),
+                                                                                              ),
+                                                                                            ],
+                                                                                          ),
+                                                                                        ),
+
+                                                                                      ],
+                                                                                    ),
+                                                                                    Row(
+                                                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                                                                      children: [
+                                                                                        Padding(
+                                                                                          padding: const EdgeInsets.only(left: 8.0),
+                                                                                          child: Column(
+                                                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                            children: [
+                                                                                              Container(
+                                                                                                width: MediaQuery.of(context).size.width/1.8,
+                                                                                                child: Text(
+                                                                                                  'Debit/Credit No.: ${ledgerData[i]['debit_no']}',
+                                                                                                  style: GoogleFonts.montserrat(
+                                                                                                      fontWeight: FontWeight.w200,
+                                                                                                      fontStyle: FontStyle.normal,
+                                                                                                      color: Colors.black54,
+                                                                                                      fontSize: 12),
+                                                                                                  maxLines: 2,
+                                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                                ),
+                                                                                              ),
+                                                                                            ],
+                                                                                          ),
+                                                                                        ),
+
+                                                                                      ],
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              // Text('${ledgerData[i]['old_ledger']}:',style: TextStyle(color: Colors.black),)
+                                                              // for (var entry in ledgerData.entries)
+                                                              //   ,
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        actions: [
+                                                          ElevatedButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(context);
+                                                            },
+                                                            child: Text('Close'),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );},
+                                                style: ElevatedButton.styleFrom(
+                                                  elevation: 4.0, backgroundColor: Constants.secondary_color, // Set the button color
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(20.0), // Set your preferred border radius here
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(FluentIcons.arrow_download_16_filled, color: Colors.white),
+                                                    Text(
+                                                      ' Download Ledger',
+                                                      style: TextStyle(color: Colors.white, fontSize: 12),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Icon(FluentIcons.arrow_download_16_filled, color: Colors.white), // Download icon
-                                                SizedBox(width: 2.0), // Add some space between icon and text
-                                                Text(
-                                                  'Download Ledger',
-                                                  style: TextStyle(color: Colors.white, fontSize: 12),
-                                                ), // Button text
-                                              ],
-                                            ),
+                                              SizedBox(width: 10,),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  //Navigator.of(context).push(MaterialPageRoute(builder: (context) => InspectionReports(dealer_id: dealer_id)));
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  elevation: 4.0, backgroundColor: Constants.secondary_color, // Set the button color
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(20.0), // Set your preferred border radius here
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Image.asset("assets/images/business-report.png",width: 24,color: Colors.white,),
+                                                    Text(
+                                                      ' Inspection Reports',
+                                                      style: TextStyle(color: Colors.white, fontSize: 12),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          SizedBox(width: 10,),
-                                          ElevatedButton(
-                                            onPressed: () async{
-                                              var dealerlatlng = co_ordinates.split(',');
-                                              dealerlat= dealerlatlng[0];
-                                              dealerlng = dealerlatlng[1];
-                                              print(co_ordinates);
-                                              print(dealerlatlng);
-                                              ISIN(dealerlat,dealerlng,inspectorlat,inspectorlng,name,dealer_id);
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              elevation: 4.0, backgroundColor: Constants.secondary_color, // Set the button color
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(20.0), // Set your preferred border radius here
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              ElevatedButton(
+                                                onPressed: () async{
+                                                  var dealerlatlng = co_ordinates.split(',');
+                                                  dealerlat= dealerlatlng[0];
+                                                  dealerlng = dealerlatlng[1];
+                                                  print(co_ordinates);
+                                                  print(dealerlatlng);
+                                                  ISIN(dealerlat,dealerlng,inspectorlat,inspectorlng,name,dealer_id);
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  elevation: 4.0, backgroundColor: Constants.secondary_color, // Set the button color
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(20.0), // Set your preferred border radius here
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  'Casual Visits',
+                                                  style: TextStyle(color: Colors.white, fontSize: 12),
+                                                ),
                                               ),
-                                            ),
-                                            child: Text(
-                                              'Casual Visits',
-                                              style: TextStyle(color: Colors.white, fontSize: 12),
-                                            ),
+                                            ],
                                           ),
                                         ],
                                       ),
@@ -541,86 +732,12 @@ class _OutletsState extends State<Outlets> {
                             ),
                           ),
                         );
-                  }
-              ),
-            ],
-          ),
-        )),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: Color(0x8ca9a9a9),
-                blurRadius: 20,
-              ),
-            ],
-          ),
-          child: BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              unselectedItemColor: Color(0xff8d8d8d),
-              unselectedLabelStyle:
-                  const TextStyle(color: Color(0xff8d8d8d), fontSize: 14),
-              unselectedFontSize: 14,
-              showUnselectedLabels: true,
-              showSelectedLabels: true,
-              selectedIconTheme: IconThemeData(
-                color: Color(0xff12283D),
-              ),
-              type: BottomNavigationBarType.shifting,
-              items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(
-                    icon: Icon(
-                      FluentIcons.home_32_regular,
-                      size: 20,
-                    ),
-                    label: 'Home',
-                    backgroundColor: Colors.white),
-                BottomNavigationBarItem(
-                    icon: Icon(
-                      FluentIcons.weather_sunny_16_regular,
-                      size: 20,
-                    ),
-                    label: 'Orders',
-                    backgroundColor: Colors.white),
-                BottomNavigationBarItem(
-                  icon: Icon(
-                    FluentIcons.inprivate_account_16_regular,
-                    size: 20,
+                      }
                   ),
-                  label: 'Profile',
-                  backgroundColor: Colors.white,
-                ),
-              ],
-              selectedItemColor: Color(0xff12283D),
-              iconSize: 40,
-              onTap: _onItemTapped,
-              elevation: 15),
-        ),
+                ],
+              ),
+            )),
       );
     });
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // if (_selectedIndex == 1) {
-    //   Navigator.push(
-    //     context,
-    //     MaterialPageRoute(builder: (context) => Orders()),
-    //   );
-    // }
-    if (_selectedIndex == 0) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => Home()),
-      );
-    }
-    if (_selectedIndex == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => Profile()),
-      );
-    }
   }
 }

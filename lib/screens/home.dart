@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dropdown_plus/dropdown_plus.dart';
+import 'package:hascol_inspection/screens/TaskCreation/TaskCreation.dart';
 import 'package:hascol_inspection/screens/Task_Dashboard.dart';
 import 'package:hascol_inspection/utils/constants.dart';
 import 'package:intl/intl.dart';
@@ -649,15 +650,20 @@ class _HomeScreenState extends State<Home> {
                               fontStyle: FontStyle.normal,
                             ),
                           ),
-                          Text(
-                            'View All',
-                            style: GoogleFonts.poppins(
-                              textStyle: Theme.of(context).textTheme.displaySmall,
-                              fontSize: 15,
-                              color: Color(0xff727272),
-                              fontWeight: FontWeight.w300,
-                              fontStyle: FontStyle.normal,
+                          GestureDetector(
+                            child: Text(
+                              'Create Task',
+                              style: GoogleFonts.poppins(
+                                textStyle: Theme.of(context).textTheme.displaySmall,
+                                fontSize: 15,
+                                color: Color(0xff727272),
+                                fontWeight: FontWeight.w300,
+                                fontStyle: FontStyle.normal,
+                              ),
                             ),
+                            onTap: (){
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => CreateTask(),),);
+                            },
                           ),
                         ],
                       ),
@@ -1127,6 +1133,8 @@ class _HomeScreenState extends State<Home> {
                                                 dealerlat= dealerlatlng[0];
                                                 dealerlng = dealerlatlng[1];
                                                 ISIN(dealerlat,dealerlng,inspectorlat,inspectorlng,dealer_name,dealer_id,id);
+                                                Navigator.push(context,
+                                                  MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: id,dealer_name: dealer_name)),);
 
                                               },
                                             ),
