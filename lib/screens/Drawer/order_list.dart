@@ -9,10 +9,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hascol_inspection/screens/create_order.dart';
+import 'package:hascol_inspection/screens/Drawer/create_order.dart';
 import 'package:hascol_inspection/screens/home.dart';
 import 'package:hascol_inspection/screens/login.dart';
-import 'package:hascol_inspection/screens/profile.dart';
+import 'package:hascol_inspection/screens/Drawer/profile.dart';
 import 'package:pdf/pdf.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
@@ -21,7 +21,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../utils/constants.dart';
+import '../../utils/constants.dart';
 
 class Orders extends StatefulWidget {
   static const Color contentColorOrange = Color(0xFF00705B);
@@ -188,7 +188,7 @@ class _OrdersState extends State<Orders> {
             style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.w700,
                 fontStyle: FontStyle.normal,
-                color: Colors.white,
+                color: Constants.secondary_color,
                 fontSize: 16),
           ),
           actions: [

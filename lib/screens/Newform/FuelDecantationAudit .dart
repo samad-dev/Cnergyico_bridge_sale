@@ -754,11 +754,11 @@ class FuelDecantationAuditState extends State<FuelDecantationAudit> {
             style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.w700,
                 fontStyle: FontStyle.normal,
-                color: Colors.white,
+                color: Constants.secondary_color,
                 fontSize: 16)
         ),
         iconTheme: IconThemeData(
-          color: Colors.white,
+          color: Constants.secondary_color,
         ),
       ),
       body: Padding(

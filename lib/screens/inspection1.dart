@@ -479,7 +479,7 @@ class _InspectionState extends State<Inspection> {
         backgroundColor: Constants.primary_color,
         title: Text('Inspection Form',style: TextStyle(color: Colors.white),),
         iconTheme: IconThemeData(
-          color: Colors.white,
+          color: Constants.secondary_color,
         ),
       ),
       body: Padding(

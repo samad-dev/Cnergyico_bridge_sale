@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:hascol_inspection/screens/Drawer/RetailerProfitability.dart';
 import 'package:hascol_inspection/screens/Newform/NStockReconciliation.dart';
 import 'package:hascol_inspection/screens/Pcc_Header.dart';
 import 'package:hascol_inspection/screens/quality_check.dart';
@@ -163,6 +164,10 @@ class TaskDashboardState extends State<TaskDashboard> {
                       inspectionid: inspectionid!,
                       dealer_name: dealer_name!,
                       formId: formId),),);
+            }
+            else if (task['form_name'] == "Retailer Profitability") {
+              Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                  RetailerProfitability(dealer_id: dealer_id, inspectionid: inspectionid!, dealer_name: dealer_name!, formId: formId!),),);
             }
             else if (task['form_name'] == "EHS Audit") {
               Navigator.push(context, MaterialPageRoute(builder: (context) =>

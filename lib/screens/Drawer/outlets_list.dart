@@ -8,10 +8,10 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hascol_inspection/screens/casualvisit.dart';
-import 'package:hascol_inspection/screens/create_order.dart';
+import 'package:hascol_inspection/screens/Drawer/create_order.dart';
 import 'package:hascol_inspection/screens/home.dart';
 import 'package:hascol_inspection/screens/login.dart';
-import 'package:hascol_inspection/screens/profile.dart';
+import 'package:hascol_inspection/screens/Drawer/profile.dart';
 import 'package:hascol_inspection/screens/stock_reconcile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
@@ -19,7 +19,7 @@ import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 
 
-import '../utils/constants.dart';
+import '../../utils/constants.dart';
 
 class Outlets extends StatefulWidget {
   static const Color contentColorOrange = Color(0xFF00705B);
@@ -164,14 +164,14 @@ class _OutletsState extends State<Outlets> {
           backgroundColor: Constants.primary_color,
           elevation: 10,
           iconTheme: IconThemeData(
-            color: Colors.white,
+            color: Constants.secondary_color,
           ),
           title: Text(
             'Outlets',
             style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.w700,
                 fontStyle: FontStyle.normal,
-                color: Colors.white,
+                color: Constants.secondary_color,
                 fontSize: 16),
           ),
         ),
@@ -490,7 +490,7 @@ class _OutletsState extends State<Outlets> {
                                           Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              ElevatedButton(
+                                              TextButton(
                                                 onPressed: ()async {
                                                   List<dynamic> ledgerData = await GetLedger(dealer_id);
 
@@ -667,16 +667,16 @@ class _OutletsState extends State<Outlets> {
                                                 ),
                                                 child: Row(
                                                   children: [
-                                                    Icon(FluentIcons.arrow_download_16_filled, color: Colors.white),
+                                                    Icon(FluentIcons.arrow_download_16_filled, color: Constants.primary_color),
                                                     Text(
                                                       ' Download Ledger',
-                                                      style: TextStyle(color: Colors.white, fontSize: 12),
+                                                      style: TextStyle(color: Constants.primary_color, fontSize: 12),
                                                     ),
                                                   ],
                                                 ),
                                               ),
                                               SizedBox(width: 10,),
-                                              ElevatedButton(
+                                              TextButton(
                                                 onPressed: () {
                                                   //Navigator.of(context).push(MaterialPageRoute(builder: (context) => InspectionReports(dealer_id: dealer_id)));
                                                 },
@@ -688,10 +688,10 @@ class _OutletsState extends State<Outlets> {
                                                 ),
                                                 child: Row(
                                                   children: [
-                                                    Image.asset("assets/images/business-report.png",width: 24,color: Colors.white,),
+                                                    Icon(FluentIcons.rectangle_portrait_location_target_20_filled, color: Constants.primary_color),
                                                     Text(
                                                       ' Inspection Reports',
-                                                      style: TextStyle(color: Colors.white, fontSize: 12),
+                                                      style: TextStyle(color: Constants.primary_color, fontSize: 12),
                                                     ),
                                                   ],
                                                 ),
@@ -701,7 +701,7 @@ class _OutletsState extends State<Outlets> {
                                           Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              ElevatedButton(
+                                              TextButton(
                                                 onPressed: () async{
                                                   var dealerlatlng = co_ordinates.split(',');
                                                   dealerlat= dealerlatlng[0];
@@ -718,7 +718,7 @@ class _OutletsState extends State<Outlets> {
                                                 ),
                                                 child: Text(
                                                   'Casual Visits',
-                                                  style: TextStyle(color: Colors.white, fontSize: 12),
+                                                  style: TextStyle(color: Constants.primary_color, fontSize: 12),
                                                 ),
                                               ),
                                             ],

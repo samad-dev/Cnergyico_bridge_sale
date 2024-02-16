@@ -7,7 +7,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
-import 'outlets_list.dart';
+import 'Drawer/outlets_list.dart';
 
 class StockVariation extends StatefulWidget {
   final String dealer_id;
@@ -181,12 +181,12 @@ class StockVariationState extends State<StockVariation> {
           style: GoogleFonts.montserrat(
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.normal,
-            color: Colors.white,
+            color: Constants.secondary_color,
             fontSize: 16,
           ),
         ),
         iconTheme: IconThemeData(
-          color: Colors.white,
+          color: Constants.secondary_color,
         ),
       ),
       body: SingleChildScrollView(

@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
-import 'outlets_list.dart';
+import 'Drawer/outlets_list.dart';
 
 class Quality_check extends StatefulWidget {
   final String dealer_id;

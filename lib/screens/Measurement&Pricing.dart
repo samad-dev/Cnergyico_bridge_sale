@@ -154,9 +154,12 @@ class MPricingState extends State<MPricing> {
           style: GoogleFonts.montserrat(
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.normal,
-            color: Colors.white,
+            color: Constants.secondary_color,
             fontSize: 16,
           ),
+        ),
+        iconTheme: IconThemeData(
+          color: Constants.secondary_color,
         ),
         backgroundColor: Constants.primary_color, // Set your desired color
       ),

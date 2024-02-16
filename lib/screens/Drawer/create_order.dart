@@ -265,7 +265,7 @@ class _CreateOrderState extends State<Create_Order> {
           //replace with our own icon data.
         ),
         iconTheme: IconThemeData(
-          color: Colors.white, //change your color here
+          color: Constants.secondary_color, //change your color here
         ),
         backgroundColor: Constants.primary_color,
         elevation: 10,
@@ -274,7 +274,7 @@ class _CreateOrderState extends State<Create_Order> {
           style: GoogleFonts.montserrat(
               fontWeight: FontWeight.w700,
               fontStyle: FontStyle.normal,
-              color: Colors.white,
+              color: Constants.secondary_color,
               fontSize: 16),
         ),
       ),

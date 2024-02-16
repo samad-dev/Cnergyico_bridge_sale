@@ -971,9 +971,9 @@ class EHSFormState extends State<EHSForm> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Constants.primary_color,
-        title: Text('EHS Form',style: TextStyle(color: Colors.white),),
+        title: Text('EHS Form',style: TextStyle(color: Constants.secondary_color,),),
         iconTheme: IconThemeData(
-          color: Colors.white,
+          color: Constants.secondary_color,
         ),
       ),
       body: Padding(

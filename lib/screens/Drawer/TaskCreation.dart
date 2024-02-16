@@ -9,12 +9,22 @@ import '../../utils/constants.dart';
 import '../home.dart';
 
 class CreateTask extends StatefulWidget {
+  final String type;
+
+  const CreateTask({Key? key, required this.type}) : super(key: key);
+
   @override
-  _CreateTaskState createState() => _CreateTaskState();
+  _CreateTaskState createState() => _CreateTaskState(type);
 }
 
 class _CreateTaskState extends State<CreateTask> {
+  final String type;
+
+  _CreateTaskState(this.type);
+
   List<Map<String, dynamic>> stationData = [];
+  List<Map<String, dynamic>> filteredData = [];
+  List<int> filteredIndices = [];
   DateTime? selectedDate;
   List<TextEditingController> textControllers =  List.generate(8, (_) =>TextEditingController());
   TextEditingController DescribeController = TextEditingController();
@@ -29,8 +39,9 @@ class _CreateTaskState extends State<CreateTask> {
   Future<void> fetchData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var user_id = prefs.getString("Id");
+    var pre = prefs.getString("privilege");
     final response = await http.get(Uri.parse(
-        'http://151.106.17.246:8080/bycobridgeApis/get/inspection/outlet_count.php?key=03201232927&id=$user_id&pre=101'));
+        'http://151.106.17.246:8080/bycobridgeApis/get/inspection/outlet_count.php?key=03201232927&id=$user_id&pre=$pre'));
 
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
@@ -57,8 +68,8 @@ class _CreateTaskState extends State<CreateTask> {
           'description': DescribeController.text.toString(),
           'dealers_id': stationData[index]['id'],
           'inspection_date': textControllers[index].text.toString(),
-          'user_id': stationData[index]['id'],
-          'row_id': '',
+          'user_id': "$user_id",
+          'row_id': "",
         });
 
         http.StreamedResponse response = await request.send();
@@ -128,6 +139,98 @@ class _CreateTaskState extends State<CreateTask> {
             padding: const EdgeInsets.all(7.0),
             child: Column(
               children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Column(
+                    children: [
+                      TextField(
+                        onChanged: (value) {
+                          setState(() {
+                            print(value);
+                            if(value==''){
+                              filteredData=[];
+                              filteredIndices=[];
+                            }
+                            else {
+                              filteredData = stationData.where((dealer) => dealer['name'].toLowerCase().contains(value.toLowerCase())).toList();
+                              // Get the indices of filtered items
+                              filteredIndices = [];
+                              stationData.asMap().forEach((index, dealer) {
+                                if (filteredData.contains(dealer)) {
+                                  filteredIndices.add(index);
+                                }
+                              });
+                            }
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Search Dealer',
+                          contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      // Optionally, display filtered indices
+                      //Text('Indices of filtered items: $filteredIndices'),
+                    ],
+                  ),
+                ),
+                ListView.builder(
+                  physics: NeverScrollableScrollPhysics(),
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
+                  itemCount: filteredData.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Card(
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: stationData[filteredIndices[index]]['isChecked'] ?? false,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      stationData[filteredIndices[index]]['isChecked'] = value;
+                                    });
+                                  },
+                                ),
+                                Container(
+                                  width: MediaQuery.of(context).size.width/1.6, // Set your desired width here
+                                  child: Text(
+                                    stationData[filteredIndices[index]]['name'],
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
+                              child: GestureDetector(
+                                onTap: () => _selectDueDate(context, index),
+                                child: AbsorbPointer(
+                                  child: TextField(
+                                    controller: textControllers[filteredIndices[index]], // TL Departure Time
+                                    decoration: InputDecoration(
+                                      labelText: 'Inspection Date',
+                                      contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0), // Adjust the padding values as needed
+                                      border: OutlineInputBorder(), // Add this line to include a border
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+
+                Divider(),
+
                 Row(
                   children: [
                     Checkbox(
@@ -173,7 +276,14 @@ class _CreateTaskState extends State<CreateTask> {
                                     });
                                   },
                                 ),
-                                Text(stationData[index]['name']),
+                                Container(
+                                  width: MediaQuery.of(context).size.width/1.6, // Set your desired width here
+                                  child: Text(
+                                    stationData[index]['name'],
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
                               ],
                             ),
                             Padding(
@@ -215,7 +325,7 @@ class _CreateTaskState extends State<CreateTask> {
                       setState(() {
                         isLoading = true;
                       });
-                        await postDataMultipleTimes(); // Assuming printNozzleValues is an async function
+                      await postDataMultipleTimes(); // Assuming printNozzleValues is an async function
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(builder: (context) => Home()),);
                       Fluttertoast.showToast(

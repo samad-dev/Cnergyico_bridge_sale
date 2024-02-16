@@ -12,6 +12,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
+import '../utils/constants.dart';
+
 class Create_Complaints extends StatefulWidget {
   static const Color contentColorOrange = Color(0xFF00705B);
   final Color leftBarColor = Color(0xFFCB6600);
@@ -59,7 +61,7 @@ class _CreateComplaintState extends State<Create_Complaints> {
           //replace with our own icon data.
         ),
         iconTheme: IconThemeData(
-          color: Colors.black, //change your color here
+          color: Constants.secondary_color, //change your color here
         ),
         backgroundColor: Colors.white,
         elevation: 10,
@@ -68,7 +70,7 @@ class _CreateComplaintState extends State<Create_Complaints> {
           style: GoogleFonts.montserrat(
               fontWeight: FontWeight.w700,
               fontStyle: FontStyle.normal,
-              color: Color(0xff12283D),
+              color: Constants.secondary_color,
               fontSize: 16),
         ),
       ),

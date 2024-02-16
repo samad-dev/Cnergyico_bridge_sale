@@ -8,19 +8,19 @@ import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hascol_inspection/screens/create_order.dart';
+import 'package:hascol_inspection/screens/Drawer/create_order.dart';
 import 'package:hascol_inspection/screens/home.dart';
 import 'package:hascol_inspection/screens/login.dart';
-import 'package:hascol_inspection/screens/profile.dart';
+import 'package:hascol_inspection/screens/Drawer/profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:map_launcher/map_launcher.dart';
 import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 
-import '../utils/constants.dart';
-import 'Task_Dashboard.dart';
-import 'inspection.dart';
+import '../../utils/constants.dart';
+import '../Task_Dashboard.dart';
+import '../inspection.dart';
 
 class Tasks extends StatefulWidget {
   static const Color contentColorOrange = Color(0xFF00705B);
@@ -66,6 +66,7 @@ class _TasksState extends State<Tasks> {
     user_privilege=pre;
     final response = await http.get(
         Uri.parse('http://151.106.17.246:8080/bycobridgeApis/get/inspection/inspector_task.php?key=03201232927&id=$id&pre=$pre'));
+        print('http://151.106.17.246:8080/bycobridgeApis/get/inspection/inspector_task.php?key=03201232927&id=$id&pre=$pre');
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       setState(() {
@@ -297,7 +298,7 @@ class _TasksState extends State<Tasks> {
             style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.w700,
                 fontStyle: FontStyle.normal,
-                color: Colors.white,
+                color: Constants.secondary_color,
                 fontSize: 16),
           ),
 
@@ -796,8 +797,7 @@ class _TasksState extends State<Tasks> {
                                               dealerlat= dealerlatlng[0];
                                               dealerlng = dealerlatlng[1];
                                               ISIN(dealerlat,dealerlng,inspectorlat,inspectorlng,dealer_name,dealer_id,id);
-                                              //Navigator.push(context,
-                                              //  MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: id,dealer_name: dealer_name)),);
+                                              Navigator.push(context, MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: id,dealer_name: dealer_name)),);
 
                                             },
                                           ),

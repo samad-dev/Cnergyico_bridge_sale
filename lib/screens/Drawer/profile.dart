@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hascol_inspection/screens/create_order.dart';
+import 'package:hascol_inspection/screens/Drawer/create_order.dart';
 import 'package:hascol_inspection/screens/home.dart';
 import 'package:hascol_inspection/screens/login.dart';
 import 'package:hascol_inspection/utils/constants.dart';
@@ -12,7 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import '../main.dart';
+import '../../main.dart';
 import 'order_list.dart';
 
 class Profile extends StatefulWidget {
@@ -57,7 +57,7 @@ class _ProfileState extends State<Profile> {
             style: GoogleFonts.montserrat(
                 fontWeight: FontWeight.w700,
                 fontStyle: FontStyle.normal,
-                color: Colors.white,
+                color: Constants.secondary_color,
                 fontSize: 16),
           ),
         ),

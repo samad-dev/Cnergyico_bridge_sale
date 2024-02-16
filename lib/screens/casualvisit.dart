@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
 import 'Task_Dashboard.dart';
-import 'outlets_list.dart';
+import 'Drawer/outlets_list.dart';
 import 'package:intl/intl.dart';
 
 class CasualVisitPage extends StatefulWidget {
@@ -88,12 +88,12 @@ class CasualVisitPageState extends State<CasualVisitPage> {
           style: GoogleFonts.montserrat(
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.normal,
-            color: Colors.white,
+            color: Constants.secondary_color,
             fontSize: 16,
           ),
         ),
         iconTheme: IconThemeData(
-          color: Colors.white,
+          color: Constants.secondary_color,
         ),
       ),
       body: SingleChildScrollView(

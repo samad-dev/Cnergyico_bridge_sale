@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:dropdown_plus/dropdown_plus.dart';
-import 'package:hascol_inspection/screens/TaskCreation/TaskCreation.dart';
+import 'package:hascol_inspection/screens/Drawer/FollowUps.dart';
+import 'package:hascol_inspection/screens/Drawer/TaskCreation.dart';
 import 'package:hascol_inspection/screens/Task_Dashboard.dart';
 import 'package:hascol_inspection/utils/constants.dart';
 import 'package:intl/intl.dart';
@@ -15,17 +16,21 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hascol_inspection/screens/complaint.dart';
 import 'package:hascol_inspection/screens/login.dart';
-import 'package:hascol_inspection/screens/order_list.dart';
-import 'package:hascol_inspection/screens/profile.dart';
-import 'package:hascol_inspection/screens/task_list.dart';
+import 'package:hascol_inspection/screens/Drawer/order_list.dart';
+import 'package:hascol_inspection/screens/Drawer/profile.dart';
+import 'package:hascol_inspection/screens/Drawer/task_list.dart';
 import 'package:map_launcher/map_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
-import 'create_order.dart';
+import '../main.dart';
+import 'Drawer/Form.dart';
+import 'Drawer/Map.dart';
+import 'Drawer/RetailerProfitability.dart';
+import 'Drawer/create_order.dart';
 import 'inspection.dart';
-import 'outlets_list.dart';
+import 'Drawer/outlets_list.dart';
 
 class Home extends StatefulWidget {
   static const Color contentColorOrange = Color(0xFF00705B);
@@ -152,20 +157,17 @@ class _HomeScreenState extends State<Home> {
         DateTime currentDatetime = DateTime.now();
         String currentDate = '${currentDatetime.year}-${currentDatetime.month}-${currentDatetime.day}';
         inspection_task = List<Map<String, dynamic>>.from(data);
-        total_task = '${inspection_task.length}';
-
+        total_task = "${inspection_task.where((task) => task['type'] == 'Inpection').length}";
         filteredList = inspection_task.where((task) {
-          // Parse the time from the map to DateTime
-          DateTime taskTime = DateTime.parse(task["time"]);
+          DateTime taskDate = DateTime.parse(task["time"]).toLocal(); // Parse task time and convert to local time zone
 
-          // Format the taskTime to match the currentDate format
-          String formattedTaskDate = '${taskTime.year}-${taskTime.month}-${taskTime.day}';
-
-          // Compare the formatted dates
-          return formattedTaskDate == currentDate;
-        }).toList();
-
-        // Now filteredList contains tasks for the current date
+          // Check if the task date is today or after today
+          return taskDate.year == currentDatetime.year &&
+              taskDate.month == currentDatetime.month &&
+              taskDate.day >= currentDatetime.day;
+        })
+            .where((task) => task['type'] == 'Inpection').toList();
+        // Now filteredList contains tasks from the current date onwards
       });
     } else {
       throw Exception('Failed to fetch data from the API');
@@ -339,6 +341,198 @@ class _HomeScreenState extends State<Home> {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('EEE d MMM kk:mm:ss').format(now);
     return Scaffold(
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/Byco_Background.jpeg'), // Replace with your image path
+                  fit: BoxFit.cover, // Adjust the BoxFit property as needed
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.transparent,
+                    ),
+                    child: Column(
+                      children: [
+                        Image.asset("assets/images/channels4_profile.png", width: MediaQuery.of(context).size.width/7 ,),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      '$Name',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Color(0xff000000),
+                        fontWeight: FontWeight.w800,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ListTile(
+                title: Text('Create Order'),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Create_Order()),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ListTile(
+                title: Text('Order List'),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Orders()),
+                  );
+                },
+              ),
+            ),
+            Divider(),
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ListTile(
+                title: Text('Create Task'),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CreateTask(type:'Inpection')),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ListTile(
+                title: Text('Task list'),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Tasks()),
+                  );
+                },
+              ),
+            ),
+            Divider(),
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ListTile(
+                title: Text('FollowUps'),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Followups()),
+                  );
+                },
+              ),
+            ),
+            Divider(),
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ListTile(
+                title: Text('Outlet'),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Outlets()),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ListTile(
+                title: Text('Exact location'),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => FormPage()),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ListTile(
+                title: Text('Map'),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MapPage()),
+                  );
+                },
+              ),
+            ),
+            Divider(),
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ListTile(
+                title: Text('Profile'),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Profile()),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ListTile(
+                title: Text('Logout'),
+                onTap: () async {
+                  Navigator.pop(context); // Close the drawer
+                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  await prefs.clear();
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => MyApp()),
+                        (route) => false, // Remove all routes from the stack
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: Builder(
+        builder: (BuildContext context) {
+          return FloatingActionButton(
+            backgroundColor: Constants.secondary_color,
+            onPressed: () {
+              // Open the drawer when the FAB is pressed
+              Scaffold.of(context).openDrawer();
+            },
+            child: Icon(Icons.menu,color: Constants.primary_color,),
+          );
+        },
+      ),
       body: Padding(
         padding: const EdgeInsets.only(top: 48.0, left: 5, right: 5),
         child: Column(
@@ -662,7 +856,7 @@ class _HomeScreenState extends State<Home> {
                               ),
                             ),
                             onTap: (){
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => CreateTask(),),);
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => CreateTask(type:'Inpection'),),);
                             },
                           ),
                         ],

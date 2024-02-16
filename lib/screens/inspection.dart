@@ -764,9 +764,9 @@ class _InspectionState extends State<Inspection> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Constants.primary_color,
-        title: Text('Inspection',style: TextStyle(color: Colors.white),),
+        title: Text('Inspection',style: TextStyle(color: Constants.secondary_color,),),
         iconTheme: IconThemeData(
-          color: Colors.white,
+          color: Constants.secondary_color,
         ),
       ),
       body: Padding(
