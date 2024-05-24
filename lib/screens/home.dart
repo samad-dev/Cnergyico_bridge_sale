@@ -1,27 +1,23 @@
 import 'dart:convert';
 import 'package:dropdown_plus/dropdown_plus.dart';
+import 'package:hascol_inspection/screens/Drawer/Cluster.dart';
 import 'package:hascol_inspection/screens/Drawer/FollowUps.dart';
+import 'package:hascol_inspection/screens/Drawer/PUMPSETUPS/PumpSetupList.dart';
 import 'package:hascol_inspection/screens/Drawer/TaskCreation.dart';
 import 'package:hascol_inspection/screens/Task_Dashboard.dart';
 import 'package:hascol_inspection/utils/constants.dart';
 import 'package:intl/intl.dart';
 import 'package:location/location.dart';
 
-import 'package:fl_chart/fl_chart.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hascol_inspection/screens/complaint.dart';
-import 'package:hascol_inspection/screens/login.dart';
 import 'package:hascol_inspection/screens/Drawer/order_list.dart';
 import 'package:hascol_inspection/screens/Drawer/profile.dart';
 import 'package:hascol_inspection/screens/Drawer/task_list.dart';
 import 'package:map_launcher/map_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
 import '../main.dart';
@@ -384,7 +380,13 @@ class _HomeScreenState extends State<Home> {
             Padding(
               padding: const EdgeInsets.all(2.0),
               child: ListTile(
-                title: Text('Create Order'),
+                title: Row(
+                  children: [
+                    Icon(FluentIcons.task_list_add_20_filled),
+                    SizedBox(width: 10,),
+                    Text('Create Order'),
+                  ],
+                ),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
                   Navigator.push(
@@ -397,7 +399,13 @@ class _HomeScreenState extends State<Home> {
             Padding(
               padding: const EdgeInsets.all(2.0),
               child: ListTile(
-                title: Text('Order List'),
+                title: Row(
+                  children: [
+                    Icon(FluentIcons.task_list_ltr_20_filled),
+                    SizedBox(width: 10,),
+                    Text('Order List'),
+                  ],
+                ),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
                   Navigator.push(
@@ -411,7 +419,13 @@ class _HomeScreenState extends State<Home> {
             Padding(
               padding: const EdgeInsets.all(2.0),
               child: ListTile(
-                title: Text('Create Task'),
+                title: Row(
+                  children: [
+                    Icon(FluentIcons.task_list_add_20_filled),
+                    SizedBox(width: 10,),
+                    Text('Create Task'),
+                  ],
+                ),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
                   Navigator.push(
@@ -424,7 +438,13 @@ class _HomeScreenState extends State<Home> {
             Padding(
               padding: const EdgeInsets.all(2.0),
               child: ListTile(
-                title: Text('Task list'),
+                title: Row(
+                  children: [
+                    Icon(FluentIcons.task_list_ltr_20_filled),
+                    SizedBox(width: 10,),
+                    Text('Task list'),
+                  ],
+                ),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
                   Navigator.push(
@@ -438,7 +458,13 @@ class _HomeScreenState extends State<Home> {
             Padding(
               padding: const EdgeInsets.all(2.0),
               child: ListTile(
-                title: Text('FollowUps'),
+                title: Row(
+                  children: [
+                    Image.asset("assets/images/cluster.png",width: 25,color: Colors.black87,),
+                    SizedBox(width: 10,),
+                    Text('FollowUps'),
+                  ],
+                ),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
                   Navigator.push(
@@ -452,7 +478,13 @@ class _HomeScreenState extends State<Home> {
             Padding(
               padding: const EdgeInsets.all(2.0),
               child: ListTile(
-                title: Text('Outlet'),
+                title: Row(
+                  children: [
+                    Image.asset("assets/images/gas-station.png",width: 20,color: Colors.black87,),
+                    SizedBox(width: 10,),
+                    Text('Outlet'),
+                  ],
+                ),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
                   Navigator.push(
@@ -465,7 +497,13 @@ class _HomeScreenState extends State<Home> {
             Padding(
               padding: const EdgeInsets.all(2.0),
               child: ListTile(
-                title: Text('Exact location'),
+                title: Row(
+                  children: [
+                    Icon(Icons.location_on_sharp),
+                    SizedBox(width: 10,),
+                    Text('Exact location'),
+                  ],
+                ),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
                   Navigator.push(
@@ -478,7 +516,32 @@ class _HomeScreenState extends State<Home> {
             Padding(
               padding: const EdgeInsets.all(2.0),
               child: ListTile(
-                title: Text('Map'),
+                title: Row(
+                  children: [
+                    Image.asset("assets/images/Followups.png",width: 32,color: Colors.black87,),
+                    SizedBox(width: 10,),
+                    Text('Cluster'),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ClusteringPage()),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ListTile(
+                title: Row(
+                  children: [
+                    Icon(FluentIcons.map_20_regular),
+                    SizedBox(width: 10,),
+                    Text('Map'),
+                  ],
+                ),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
                   Navigator.push(
@@ -492,7 +555,29 @@ class _HomeScreenState extends State<Home> {
             Padding(
               padding: const EdgeInsets.all(2.0),
               child: ListTile(
-                title: Text('Profile'),
+                title: Row(
+                  children: [
+                    Icon(Icons.settings),
+                    SizedBox(width: 10,),
+                    Text('Pump Setup'),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => PumpSetupList()),);
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ListTile(
+                title: Row(
+                  children: [
+                    Icon(Icons.person),
+                    SizedBox(width: 10,),
+                    Text('Profile'),
+                  ],
+                ),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
                   Navigator.push(
@@ -505,7 +590,13 @@ class _HomeScreenState extends State<Home> {
             Padding(
               padding: const EdgeInsets.all(2.0),
               child: ListTile(
-                title: Text('Logout'),
+                title: Row(
+                  children: [
+                    Icon(Icons.logout),
+                    SizedBox(width: 10,),
+                    Text('Logout'),
+                  ],
+                ),
                 onTap: () async {
                   Navigator.pop(context); // Close the drawer
                   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -716,7 +807,7 @@ class _HomeScreenState extends State<Home> {
                                 )
                               ],
                             ),
-                  
+
                             //SizedBox
                             //T //SizedBox
                             //SizedBox
@@ -806,7 +897,7 @@ class _HomeScreenState extends State<Home> {
                                 )
                               ],
                             ),
-                  
+
                             //SizedBox
                             //T //SizedBox
                             //SizedBox
@@ -823,7 +914,7 @@ class _HomeScreenState extends State<Home> {
             SizedBox(
               height: 10,
             ),
-            
+
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -1327,8 +1418,7 @@ class _HomeScreenState extends State<Home> {
                                                 dealerlat= dealerlatlng[0];
                                                 dealerlng = dealerlatlng[1];
                                                 ISIN(dealerlat,dealerlng,inspectorlat,inspectorlng,dealer_name,dealer_id,id);
-                                                Navigator.push(context,
-                                                  MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: id,dealer_name: dealer_name)),);
+                                                Navigator.push(context, MaterialPageRoute(builder: (context) => TaskDashboard(dealer_id: dealer_id,inspectionid: id,dealer_name: dealer_name)),);
 
                                               },
                                             ),
@@ -1342,6 +1432,11 @@ class _HomeScreenState extends State<Home> {
                             ),
                           );
                         }
+                    ),
+                    Container(
+                      height: 60, // Set the height to 20
+                      // You can optionally set other properties like color, width, etc.
+                      color: Colors.transparent, // Set the color as per your requirement
                     ),
                   ],
                 ),
@@ -1369,7 +1464,7 @@ class _HomeScreenState extends State<Home> {
             showUnselectedLabels: true,
             showSelectedLabels: true,
             selectedIconTheme: IconThemeData(
-              color: Constants.primary_color,
+              color: Constants.secondary_color,
             ),
             type: BottomNavigationBarType.shifting,
             items: const <BottomNavigationBarItem>[
@@ -1396,7 +1491,7 @@ class _HomeScreenState extends State<Home> {
                 backgroundColor: Colors.white,
               ),
             ],
-            selectedItemColor: Constants.primary_color,
+           selectedItemColor: Constants.secondary_color,
             iconSize: 40,
             onTap: _onItemTapped,
             elevation: 15),

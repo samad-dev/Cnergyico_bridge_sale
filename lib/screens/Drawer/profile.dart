@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../main.dart';
+import 'ChangePassword.dart';
 import 'order_list.dart';
 
 class Profile extends StatefulWidget {
@@ -111,7 +112,9 @@ class _ProfileState extends State<Profile> {
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: GestureDetector(
-                                onTap: (){_launchURL('https://www.pumapakistan.com/en/contact');},
+                                onTap: (){
+                                  //_launchURL('https://www.pumapakistan.com/en/contact');
+                                  },
                                 child: Row(
                                   children: [
                                     Icon(
@@ -136,7 +139,7 @@ class _ProfileState extends State<Profile> {
                             padding: const EdgeInsets.all(8.0),
                             child: GestureDetector(
                                 onTap: (){
-                                  _launchURL("https://www.pumapakistan.com/en/products-services/#polices");
+                                  //_launchURL("https://www.pumapakistan.com/en/products-services/#polices");
                                 },
                                 child: Row(
                                   children: [
@@ -157,6 +160,38 @@ class _ProfileState extends State<Profile> {
                                   ],
                                 ),
                               ),
+                          ),
+                          Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child:GestureDetector(
+                                onTap: () async {
+                                  Navigator.push(context,
+                                    MaterialPageRoute(builder: (context) => ChangePasswordPage()),);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.lock_open,
+                                        size: 25,
+                                      ),
+                                      SizedBox(width: 5,),
+                                      Container(
+                                        child: Text(
+                                          'Change Password',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            color: Color(0xff000000),
+                                            fontWeight: FontWeight.w600,
+                                            fontStyle: FontStyle.normal,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -221,7 +256,7 @@ class _ProfileState extends State<Profile> {
               showUnselectedLabels: true,
               showSelectedLabels: true,
               selectedIconTheme: IconThemeData(
-                color: Constants.primary_color,
+                color: Constants.secondary_color,
               ),
               type: BottomNavigationBarType.shifting,
               items: const <BottomNavigationBarItem>[
@@ -248,7 +283,7 @@ class _ProfileState extends State<Profile> {
                   backgroundColor: Colors.white,
                 ),
               ],
-              selectedItemColor: Constants.primary_color,
+             selectedItemColor: Constants.secondary_color,
               iconSize: 40,
               onTap: _onItemTapped,
               elevation: 15),

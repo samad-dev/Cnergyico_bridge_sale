@@ -204,6 +204,7 @@ class TaskDashboardState extends State<TaskDashboard> {
             }
             else if (task['form_name'] == "Stock Reconciliation") {
               Navigator.push(context, MaterialPageRoute(builder: (context) => NStockReconciliation(dealer_id: dealer_id, inspectionid: inspectionid!, dealer_name: dealer_name!, formId: formId!),),);
+             // Navigator.push(context, MaterialPageRoute(builder: (context) => NStockReconciliation(dealer_id: dealer_id, inspectionid: inspectionid!, dealer_name: dealer_name!, formId: formId!),),);
             }
             else if (task['form_name'] == "Site_Completion_Reports") {
               //Navigator.push(context, MaterialPageRoute(builder: (context) => StockReconcilePage(dealer_id: dealer_id, inspectionid: inspectionid!, dealer_name: dealer_name!,),),);

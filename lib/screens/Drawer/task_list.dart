@@ -833,7 +833,7 @@ class _TasksState extends State<Tasks> {
               showUnselectedLabels: true,
               showSelectedLabels: true,
               selectedIconTheme: IconThemeData(
-                color: Constants.primary_color,
+                color: Constants.secondary_color,
               ),
               type: BottomNavigationBarType.shifting,
               items: const <BottomNavigationBarItem>[
@@ -860,7 +860,7 @@ class _TasksState extends State<Tasks> {
                   backgroundColor: Colors.white,
                 ),
               ],
-              selectedItemColor: Constants.primary_color,
+             selectedItemColor: Constants.secondary_color,
               iconSize: 40,
               onTap: _onItemTapped,
               elevation: 15),

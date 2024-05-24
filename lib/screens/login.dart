@@ -16,6 +16,7 @@ class Login extends StatefulWidget {
 }
 final _emailController = TextEditingController();
 final _passwordController = TextEditingController();
+bool _obscurePassword = true;
 
 Future<void> login(BuildContext context) async {
   final email = _emailController.text;
@@ -225,10 +226,10 @@ class _LoginState extends State<Login> {
                           fontSize: 16,
                           fontStyle: FontStyle.normal,
                         ),
-                        obscureText: true,
+                        obscureText: _obscurePassword, // Use the state variable
                         decoration: InputDecoration(
                           hintText: 'Enter Password',
-                          hintStyle:GoogleFonts.raleway(
+                          hintStyle: GoogleFonts.raleway(
                             color: Color(0xff9d9d9d),
                             fontSize: 16,
                           ),
@@ -238,18 +239,30 @@ class _LoginState extends State<Login> {
                             color: Color(0xffffffff),
                             fontSize: 16,
                           ),
-                          contentPadding: EdgeInsets.symmetric(vertical: 15), // Adjust padding as needed
+                          contentPadding: EdgeInsets.symmetric(vertical: 15),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(width:2,color: Colors.grey),
+                            borderSide: BorderSide(width: 2, color: Colors.grey),
                           ),
                           focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(width:2,color: Constants.primary_color), // Color of the border
+                            borderSide:
+                            BorderSide(width: 2, color: Constants.primary_color),
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
                           ),
                         ),
                       ),
                     ),
-
-
 
                     SizedBox(
                       height: 20,

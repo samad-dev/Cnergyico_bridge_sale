@@ -30,14 +30,9 @@ class ProductControllers {
   TextEditingController averagedailysales = TextEditingController();
   List<Map<String, String>> _Tanks = [];
   List<Map<String, String>> _Nozzle = [];
-  //New totalizer
-  List<TextEditingController> NewopeningSalesControllers = [];
-  List<TextEditingController> NewclosingSalesControllers = [];
-  List<TextEditingController> NewsalesControllers = [];
-  List<Map<String, String>> NewNozzle = [];
 
   // Method to add a new entry to customValues
-  void addCustomTanks(String id, String name, String closing,String opening,String openingdip, String closingdip) {
+  void addCustomTanks(String id, String name, String closing,String opening,String openingdip, String closingdip ) {
     // Check if the ID already exists
     bool idExists = _Tanks.any((entry) => entry['id'] == id);
 
@@ -99,10 +94,9 @@ class NStockReconciliationState extends State<NStockReconciliation> {
   final String dealer_name;
   final String formId;
   List<TextEditingController> _openingcontroller = [];
-
-  //New Totalizer
-
-
+  List<TextEditingController> _Newopeningcontroller = [];
+  List<TextEditingController> _Oldclosingcontroller = [];
+  List<TextEditingController> _Newclosingcontroller = [];
   NStockReconciliationState(
       this.dealer_id, this.inspectionid, this.dealer_name, this.formId);
 
@@ -316,7 +310,6 @@ class NStockReconciliationState extends State<NStockReconciliation> {
       }
     }
   }
-
 
   @override
   void initState() {
@@ -534,6 +527,142 @@ class NStockReconciliationState extends State<NStockReconciliation> {
                                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                                       ),
                                     ),
+                                    // FutureBuilder(
+                                    //   future: fetchNozzles(),
+                                    //   builder: (context, snapshot) {
+                                    //     if (snapshot.connectionState == ConnectionState.waiting) {
+                                    //       return CircularProgressIndicator();
+                                    //     } else if (snapshot.hasError) {
+                                    //       return Text('Error: ${snapshot.error}');
+                                    //     } else if (!snapshot.hasData || (snapshot.data as List).isEmpty) {
+                                    //       return Text('No nozzles available.');
+                                    //     } else {
+                                    //       List<Map<String, dynamic>> nozzleList = snapshot.data as List<Map<String, dynamic>>;
+                                    //       List<Map<String, dynamic>> filteredNozzles = nozzleList.where((nozzle) => nozzle['product_name'] == product).toList();
+                                    //
+                                    //       controllers?.openingSalesControllers.clear();
+                                    //       controllers?.closingSalesControllers.clear();
+                                    //       controllers?.salesControllers.clear();
+                                    //
+                                    //       return Column(
+                                    //         children: filteredNozzles.asMap().entries.map((entry) {
+                                    //           int index = entry.key + 1;
+                                    //           Map<String, dynamic> nozzle = entry.value;
+                                    //
+                                    //           TextEditingController openingSalesController = TextEditingController(text: nozzle['new_reading']??'0');
+                                    //           print(nozzle['new_reading']);
+                                    //           print(nozzle);
+                                    //           TextEditingController closingSalesController = TextEditingController();
+                                    //           TextEditingController SalesController = TextEditingController();
+                                    //
+                                    //           controllers?.openingSalesControllers.add(openingSalesController);
+                                    //           controllers?.closingSalesControllers.add(closingSalesController);
+                                    //           controllers?.salesControllers.add(SalesController);
+                                    //
+                                    //           return Padding(
+                                    //             padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 10),
+                                    //             child: Column(
+                                    //               crossAxisAlignment: CrossAxisAlignment.start,
+                                    //               children: [
+                                    //                 Row(
+                                    //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    //                   crossAxisAlignment: CrossAxisAlignment.center,
+                                    //                   children: [
+                                    //                     Text(
+                                    //                       'Nozzle$index: ${nozzle['name']}',
+                                    //                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                    //                     ),
+                                    //                     Checkbox(
+                                    //                       value: _isChecked[index] == '' ? false : true,
+                                    //                       onChanged: (bool? newValue) {
+                                    //                         if(newValue == true){
+                                    //                           setState(() {
+                                    //                             _isChecked[index] = '${nozzle['id']}' ;
+                                    //                           });
+                                    //                         }else{
+                                    //                           setState(() {
+                                    //                             _isChecked[index] = '' ;
+                                    //                           });
+                                    //                         }
+                                    //                       },
+                                    //                     )
+                                    //                   ],
+                                    //                 ),
+                                    //                 SizedBox(height: 10,),
+                                    //                 Row(
+                                    //                   children: [
+                                    //                     if(_isChecked[index] == '')
+                                    //                       Expanded(
+                                    //                         child: TextField(
+                                    //                           enabled: false,
+                                    //                           decoration: InputDecoration(
+                                    //                             labelText: 'Opening',
+                                    //                             border: OutlineInputBorder(),
+                                    //                           ),
+                                    //                           controller: openingSalesController,
+                                    //                         ),
+                                    //                       ),
+                                    //                     if(_isChecked[index] != '')
+                                    //                       Expanded(
+                                    //                       child: TextField(
+                                    //                         enabled: true,
+                                    //                         decoration: InputDecoration(
+                                    //                           labelText: 'Opening',
+                                    //                           border: OutlineInputBorder(),
+                                    //                         ),
+                                    //                         controller: openingSalesController,
+                                    //                       ),
+                                    //                     ),
+                                    //                     SizedBox(width: 8),
+                                    //                     Expanded(
+                                    //                       child: TextField(
+                                    //                         decoration: InputDecoration(
+                                    //                           labelText: 'Closing',
+                                    //                           border: OutlineInputBorder(),
+                                    //                         ),
+                                    //                         keyboardType: TextInputType.number,
+                                    //                         controller: closingSalesController,
+                                    //                         onChanged: (value){
+                                    //                           print("opening sales");
+                                    //                           printControllerValues(controllers!.openingSalesControllers);
+                                    //                           print("closing sales");
+                                    //                           printControllerValues(controllers.closingSalesControllers);
+                                    //                           print("sales");
+                                    //                           printControllerValues(controllers.salesControllers);
+                                    //
+                                    //                           // Calculate Sales and update SalesController
+                                    //                           double openingValue = double.tryParse(openingSalesController.text.trim()) ?? 0;
+                                    //                           double closingValue = double.tryParse(closingSalesController.text.trim()) ?? 0;
+                                    //                           double salesValue = closingValue - openingValue;
+                                    //                           SalesController.text = salesValue.toString();
+                                    //                           controllers.closingSalesSumController.text = calculateSum(controllers.salesControllers).toString();
+                                    //                           controllers.bookController.text = Bookvalue(controllers.openingDipControllersltr,controllers.totalRecieptsController,controllers.closingSalesSumController).toString();
+                                    //                           controllers.varianceController.text = Variance(controllers.closingDipSumController,controllers.openingDipControllersltr,controllers.totalRecieptsController,controllers.closingSalesSumController).toString();
+                                    //                           controllers.addCustomNozzle("${nozzle['id']}","${nozzle['name']}",closingSalesController.text.toString(),openingSalesController.text.toString());
+                                    //                         },
+                                    //                       ),
+                                    //                     ),
+                                    //                     SizedBox(width: 8,),
+                                    //                     Expanded(
+                                    //                       child: TextField(
+                                    //                         enabled: false,
+                                    //                         decoration: InputDecoration(
+                                    //                           labelText: 'Sales',
+                                    //                           border: OutlineInputBorder(),
+                                    //                         ),
+                                    //                         controller: SalesController,
+                                    //                       ),
+                                    //                     ),
+                                    //                   ],
+                                    //                 ),
+                                    //               ],
+                                    //             ),
+                                    //           );
+                                    //         }).toList(),
+                                    //       );
+                                    //     }
+                                    //   },
+                                    // ),
                                     ListView.builder(
                                         physics: NeverScrollableScrollPhysics(),
                                         scrollDirection: Axis.vertical,
@@ -548,9 +677,6 @@ class NStockReconciliationState extends State<NStockReconciliation> {
                                             TextEditingController SalesController = TextEditingController();
                                             controllers?.openingSalesControllers.add(openingSalesController);
                                             controllers?.closingSalesControllers.add(closingSalesController);
-                                            controllers?.NewopeningSalesControllers.add(TextEditingController());
-                                            controllers?.NewclosingSalesControllers.add(TextEditingController());
-                                            controllers?.NewsalesControllers.add(TextEditingController());
                                             // _openingcontroller.add(new TextEditingController());
                                             // _openingcontroller[index].value = TextEditingValue(
                                             //   text: nozzleList[index]['new_reading'] ?? '0',
@@ -566,132 +692,25 @@ class NStockReconciliationState extends State<NStockReconciliation> {
                                                     crossAxisAlignment: CrossAxisAlignment.center,
                                                     children: [
                                                       Text(
-                                                        '${nozzleList[index]['name']}',
+                                                        'Nozzle$index: ${nozzleList[index]['name']}',
                                                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                                       ),
-                                                      // Checkbox(
-                                                      //   value: _isCheckedb[index],
-                                                      //   onChanged: (bool? newValue) {
-                                                      //     _isCheckedb[index] = newValue!;
-                                                      //     if(newValue == true){
-                                                      //       setState(() {
-                                                      //         _isChecked[index] = '${nozzleList[index]['id']}' ;
-                                                      //       });
-                                                      //     }else{
-                                                      //       _openingcontroller[index].value = TextEditingValue(text: nozzleList[index]['new_reading']
-                                                      //       );
-                                                      //       setState(() {
-                                                      //         _isChecked[index] = '' ;
-                                                      //       });
-                                                      //     }
-                                                      //   },
-                                                      // )
-                                                      TextButton(
-                                                          onPressed: (){
-                                                            showDialog(
-                                                              context: context,
-                                                              builder: (BuildContext context) {
-                                                                print(''
-                                                                    'ID ${nozzleList[index]['id']}'
-                                                                    'Totalizer');
-                                                                return AlertDialog(
-                                                                  title: Text('New Totalizer'),
-                                                                  content: Column(
-                                                                    mainAxisSize: MainAxisSize.min,
-                                                                    children: <Widget>[
-                                                                      Text(nozzleList[index]['name']),
-                                                                      SizedBox(height: 10,),
-                                                                      Row(
-                                                                        children: [
-                                                                          Expanded(
-                                                                            child: TextFormField(
-                                                                              controller:controllers?.NewopeningSalesControllers[index],
-                                                                              decoration: InputDecoration(
-                                                                                  labelText: 'Opening Sales',
-                                                                                border: OutlineInputBorder(),
-                                                                              ),
-                                                                              keyboardType: TextInputType.number,
-                                                                              validator: (value) {
-                                                                                if (value == null || value.isEmpty) {
-                                                                                  return 'Please enter opening sales';
-                                                                                }
-                                                                                return null;
-                                                                              },
-                                                                            ),
-                                                                          ),
-                                                                          SizedBox(width: 10,),
-                                                                          Expanded(
-                                                                            child: TextFormField(
-                                                                              controller:controllers?.NewclosingSalesControllers[index],
-                                                                              decoration: InputDecoration(
-                                                                                  labelText: 'Closing Sales',
-                                                                                border: OutlineInputBorder(),
-                                                                              ),
-                                                                              keyboardType: TextInputType.number,
-                                                                              validator: (value) {
-                                                                                if (value == null || value.isEmpty) {
-                                                                                  return 'Please enter closing sales';
-                                                                                }
-                                                                                return null;
-                                                                              },
-                                                                              onChanged: (value){
-                                                                                double openingValue = double.tryParse(controllers!.NewopeningSalesControllers[index].text.trim()) ?? 0;
-                                                                                double closingValue = double.tryParse(controllers.NewclosingSalesControllers[index].text.trim()) ?? 0;
-                                                                                double salesValue = closingValue - openingValue;
-                                                                                controllers.NewsalesControllers[index].text = salesValue.toString();
-                                                                              },
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      SizedBox(height: 10,),
-                                                                      TextFormField(
-                                                                        controller: controllers?.NewsalesControllers[index],
-                                                                        decoration: InputDecoration(
-                                                                          labelText: 'Sales',
-                                                                          border: OutlineInputBorder(),
-                                                                        ),
-                                                                        enabled: false,
-                                                                        keyboardType: TextInputType.number,
-                                                                        validator: (value) {
-                                                                          if (value == null || value.isEmpty) {
-                                                                            return 'Please enter sales';
-                                                                          }
-                                                                          return null;
-                                                                        },
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                  actions: <Widget>[
-                                                                    TextButton(
-                                                                      child: Text('Cancel'),
-                                                                      onPressed: () {
-                                                                        Navigator.of(context).pop();
-                                                                      },
-                                                                    ),
-                                                                    ElevatedButton(
-                                                                      child: Text('Submit'),
-                                                                      onPressed: () {
-                                                                          Navigator.of(context).pop();
-                                                                          controllers?.closingSalesSumController.text = calculateSum1(controllers.salesControllers,controllers.NewsalesControllers).toString();
-                                                                          print('${controllers?.NewopeningSalesControllers[index].text},'
-                                                                              '${controllers?.NewclosingSalesControllers[index].text},'
-                                                                              'ID ${nozzleList[index]['id']},'
-                                                                              '');
-                                                                      },
-                                                                    ),
-                                                                  ],
-                                                                );
-                                                              },
+                                                      Checkbox(
+                                                        value: _isCheckedb[index],
+                                                        onChanged: (bool? newValue) {
+                                                          _isCheckedb[index] = newValue!;
+                                                          if(newValue == true){
+                                                            setState(() {
+                                                              _isChecked[index] = '${nozzleList[index]['id']}' ;
+                                                            });
+                                                          }else{
+                                                            _openingcontroller[index].value = TextEditingValue(text: nozzleList[index]['new_reading']
                                                             );
-                                                          },
-                                                          child: Text(
-                                                            'Change',
-                                                            style: TextStyle(
-                                                                fontSize: 12,
-                                                              color: Colors.grey,
-                                                            ),
-                                                          )
+                                                            setState(() {
+                                                              _isChecked[index] = '' ;
+                                                            });
+                                                          }
+                                                        },
                                                       )
                                                     ],
                                                   ),
@@ -734,7 +753,7 @@ class NStockReconciliationState extends State<NStockReconciliation> {
                                                             double closingValue = double.tryParse(closingSalesController.text.trim()) ?? 0;
                                                             double salesValue = closingValue - openingValue;
                                                             SalesController.text = salesValue.toString();
-                                                            controllers.closingSalesSumController.text = calculateSum1(controllers.salesControllers,controllers.NewsalesControllers).toString();
+                                                            controllers.closingSalesSumController.text = calculateSum(controllers.salesControllers).toString();
                                                             controllers.bookController.text = Bookvalue(controllers.openingDipControllersltr,controllers.totalRecieptsController,controllers.closingSalesSumController).toString();
                                                             controllers.varianceController.text = Variance(controllers.closingDipSumController,controllers.openingDipControllersltr,controllers.totalRecieptsController,controllers.closingSalesSumController).toString();
                                                             controllers.addCustomNozzle("${nozzleList[index]['id']}","${nozzleList[index]['name']}",closingSalesController.text.toString(),_openingcontroller[index].text.toString());
@@ -818,7 +837,7 @@ class NStockReconciliationState extends State<NStockReconciliation> {
                                                                   double closingValue = double.tryParse(closingSalesController.text.trim()) ?? 0;
                                                                   double salesValue = closingValue - openingValue;
                                                                   SalesController.text = salesValue.toString();
-                                                                  controllers.closingSalesSumController.text = calculateSum1(controllers.salesControllers,controllers.NewsalesControllers).toString();
+                                                                  controllers.closingSalesSumController.text = calculateSum(controllers.salesControllers).toString();
                                                                   controllers.bookController.text = Bookvalue(controllers.openingDipControllersltr,controllers.totalRecieptsController,controllers.closingSalesSumController).toString();
                                                                   controllers.varianceController.text = Variance(controllers.closingDipSumController,controllers.openingDipControllersltr,controllers.totalRecieptsController,controllers.closingSalesSumController).toString();
                                                                   controllers.addCustomNozzle("${nozzleList[index]['id']}","${nozzleList[index]['name']}",closingSalesController.text.toString(),_openingcontroller[index].text.toString());
@@ -1228,7 +1247,6 @@ class NStockReconciliationState extends State<NStockReconciliation> {
     double sum = closingDipSum - bookValue;
     return sum;
   }
-
   double calculateSum(List<TextEditingController> controllers) {
     double sum = 0;
     for (var controller in controllers) {
@@ -1238,26 +1256,6 @@ class NStockReconciliationState extends State<NStockReconciliation> {
     }
     return sum;
   }
-
-  double calculateSum1(List<TextEditingController> controllers, List<TextEditingController> newsalesControllers) {
-    double sum = 0;
-    double Newsum = 0;
-
-    for (var controller in controllers) {
-      if (controller.text.isNotEmpty) {
-        sum += double.parse(controller.text);
-      }
-    }
-
-    for (var newsalesController in newsalesControllers) {
-      if (newsalesController.text.isNotEmpty) {
-        Newsum += double.parse(newsalesController.text);
-      }
-    }
-
-    return sum + Newsum;
-  }
-
   void printControllerValues(List<TextEditingController> controllers) {
     for (var controller in controllers) {
       print('Controller Text: ${controller.text}');

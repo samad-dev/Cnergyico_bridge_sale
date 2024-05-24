@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dropdown_plus/dropdown_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -39,6 +40,7 @@ class _RetailerProfitabilityState extends State<RetailerProfitability> {
     'Utility', 'Genset Exp-Diesel', 'FC', 'Misc', 'Net Income',
   ];
   bool isLoading = false;
+  String choice = ''; // Variable to store the selected value
 
   @override
   void initState() {
@@ -140,9 +142,9 @@ class _RetailerProfitabilityState extends State<RetailerProfitability> {
     request.fields.addAll({
       'dealer_id': '$dealer_id',
       'row_id': '',
-      'cf_total': cfControllers[26].text,
-      'sf_total': sfControllers[26].text,
-      'df_total': dfControllers[26].text,
+      'cf_total': cfControllers[26].text.isEmpty?'0':cfControllers[26].text,
+      'sf_total': sfControllers[26].text.isEmpty?'0':sfControllers[26].text,
+      'df_total': dfControllers[26].text.isEmpty?'0':dfControllers[26].text,
       'data': datalist,
       'user_id': '$user_id',
       'task_id': '$inspectionid',
@@ -208,6 +210,27 @@ class _RetailerProfitabilityState extends State<RetailerProfitability> {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            Padding(
+              padding: EdgeInsets.all(12),
+              child: TextDropdownFormField(
+                options: const ['CF', 'SF', 'DF'],
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18.0),
+                  ),
+                  suffixIcon: Icon(Icons.arrow_drop_down_circle_outlined),
+                  labelText: "Select Option",
+                ),
+                dropdownHeight: 100,
+                onChanged: (dynamic value) {
+                  if (value.isNotEmpty) {
+                    setState(() {
+                      choice =value;
+                    });
+                  }
+                },
+              ),
+            ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: List.generate(rowTitles.length, (index) {
@@ -217,7 +240,8 @@ class _RetailerProfitabilityState extends State<RetailerProfitability> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
+                        if(choice.isNotEmpty)
+                          Padding(
                           padding: const EdgeInsets.only(top: 4, left: 8, bottom: 4),
                           child: Text(
                             rowTitles[index],
@@ -228,7 +252,8 @@ class _RetailerProfitabilityState extends State<RetailerProfitability> {
                           padding: const EdgeInsets.symmetric(horizontal: 2),
                           child: Row(
                             children: [
-                              Expanded(
+                              if(choice=='CF')
+                                Expanded(
                                 flex: 1,
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
@@ -281,7 +306,8 @@ class _RetailerProfitabilityState extends State<RetailerProfitability> {
                                   ),
                                 ),
                               ),
-                              Expanded(
+                              if(choice=='SF')
+                                Expanded(
                                 flex: 1,
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
@@ -336,7 +362,8 @@ class _RetailerProfitabilityState extends State<RetailerProfitability> {
                                   ),
                                 ),
                               ),
-                              Expanded(
+                              if(choice=='DF')
+                                Expanded(
                                 flex: 1,
                                 child: Padding(
                                   padding: const EdgeInsets.all(8.0),
@@ -399,7 +426,8 @@ class _RetailerProfitabilityState extends State<RetailerProfitability> {
                 );
               }),
             ),
-            Padding(
+            if(choice.isNotEmpty)
+              Padding(
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(

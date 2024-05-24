@@ -221,7 +221,6 @@ class EHSFormState extends State<EHSForm> {
       print('Error: $error');
     }
   }
-
   Future<List<Map<String, String>>> getproductquantity() async {
     final apiUrl =
         'http://151.106.17.246:8080/bycobridgeApis/get/get_dealers_tanks.php?key=03201232927&dealer_id=${widget.dealer_id}';

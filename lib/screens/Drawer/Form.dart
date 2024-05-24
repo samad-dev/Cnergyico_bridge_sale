@@ -17,13 +17,13 @@ class FormPage extends StatefulWidget {
 }
 
 class _FormPageState extends State<FormPage> {
+  List<String> namelist = [];
+  List<String> name_id_list = [];
   String? selectedOMCS;
   String? selectedOMCSID;
   String? selectedRadio;
 
   TextEditingController pumpNameController = TextEditingController();
-  List<String> namelist = [];
-  List<String> name_id_list = [];
 
   List<String> Outletlist = [];
   List<String> Outlet_id_list = [];
@@ -36,7 +36,7 @@ class _FormPageState extends State<FormPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var id = prefs.getString("Id");
     final response = await http.get(Uri.parse(
-        'http://151.106.17.246:8080/OMCS-CMS-APIS/get/get_omcs.php?key=03201232927'));
+        'http://151.106.17.246:8080/bycobridgeApis/get/get_omcs.php?key=03201232927'));
 
     if (response.statusCode == 200) {
       print("Hello world");
